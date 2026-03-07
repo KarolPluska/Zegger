@@ -1,0 +1,37 @@
+WIADOMOŚĆ STARTOWA DO CODEX
+===========================
+
+Masz wykonać pełną przebudowę obecnego systemu do nowej wersji Zegger ERP.
+To nie jest zwykły refactor jednego pliku ani kosmetyczna aktualizacja pluginu.
+Masz zbudować nowy, kompletny plugin ERP, wykorzystując obecny Panel Ofertowy jako istniejący, dojrzały moduł, który musi zostać zachowany bez regresji w wyglądzie, logice i działaniu.
+
+Foldery i pliki, do których masz dostęp:
+- codex_zegger_erp_materials - tutaj znajdziesz komplet materiałów/specyfikacji dla zadania
+- zq-offer-suite - tutaj znajduje się rozpakowany obecny plugin legacy Panelu Ofertowego
+- Plugin ZIP - tutaj znajduje się ZIP obecnego pluginu: zq-offer-suite-v1.2.18.7.zip
+- Źródło - Kalkulator ogrodzeń ZEGGER v1.9.9.1.html - obecny plik kalkulatora, który też musisz zaktualizować
+
+Twoje zadanie:
+1. Dokładnie przeanalizować materiały z folderu codex_zegger_erp_materials.
+2. Dokładnie przeanalizować obecny plugin legacy w folderze zq-offer-suite.
+3. Dokładnie przeanalizować obecny plik kalkulatora.
+4. Na tej podstawie zbudować kompletnie nowy plugin Zegger ERP.
+5. Zachować Panel Ofertowy jako gotowy moduł systemu ERP - bez regresji jego UX/UI i logiki biznesowej.
+6. Wdrożyć wszystkie nowe moduły, relacje i reguły opisane w materiałach.
+7. Zaktualizować kalkulator tak, aby nie hostował już starego panelu, tylko uruchamiał nowy Zegger ERP przez nowy launcher.
+8. Dostarczyć gotowy kod, gotowy ZIP pluginu, zaktualizowany plik kalkulatora i instrukcję wdrożenia.
+
+Najważniejsze zasady:
+- nie gub żadnego wymagania z materiałów
+- nie upraszczaj samowolnie logiki biznesowej
+- nie cofaj obecnego modułu ofertowego do słabszej wersji
+- nie pytaj o rzeczy, które są już zdefiniowane w materiałach
+- jeśli legacy kod jest zbyt monolityczny, przebuduj go, ale zachowaj wynik końcowy
+- traktuj materiały jako pełną specyfikację wykonawczą
+
+Priorytet absolutny:
+- Panel Ofertowy ma pozostać mocnym, dopracowanym modułem
+- ale cały system ma zostać przebudowany do architektury Zegger ERP
+- wszystko ma działać razem jako jedna nowa wersja produktu
+
+Pracuj tak, jakby to był projekt produkcyjny do wdrożenia, a nie proof of concept.

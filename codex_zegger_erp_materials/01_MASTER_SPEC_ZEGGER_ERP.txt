@@ -1,0 +1,231 @@
+ZEGGER ERP - MASTER SPEC
+========================
+
+1. NOWY MODEL PRODUKTU
+----------------------
+Powstaje nowy system nadrzędny:
+- Zegger ERP
+
+Obecny Panel Ofertowy:
+- nie jest usuwany
+- nie jest porzucany
+- staje się jednym z modułów ERP
+
+Nowy system ma przypominać ERP/modular business platform:
+- wspólne logowanie
+- wspólne konta i firmy
+- wspólny shell aplikacji
+- wiele modułów
+- globalny komunikator
+- globalne powiadomienia
+- zarządzanie firmą i użytkownikami
+- zarządzanie źródłami danych i bibliotekami
+- dalsza rozbudowa przez kolejne moduły
+
+2. GŁÓWNY FLOW UŻYTKOWNIKA
+--------------------------
+2.1. Wejście
+- użytkownik klika przycisk wejścia do Zegger ERP
+- może to być przycisk na kalkulatorze lub inny launcher na stronie
+- kalkulator jest tylko jednym z punktów wejścia
+
+2.2. Auth
+- pojawia się ekran logowania / rejestracji
+- użytkownik może:
+  - zalogować się
+  - założyć nową firmę i konto właściciela
+  - założyć konto użytkownika i wysłać prośbę o dołączenie do istniejącej firmy
+
+2.3. Po zalogowaniu
+- wszyscy użytkownicy trafiają na ten sam ekran główny: Dashboard modułów
+- na ekranie są kafelki modułów
+- widoczność kafelków zależy od uprawnień
+- owner widzi więcej, zwykły user mniej
+- topbar jest stały i globalny
+- moduły przełączają się wewnątrz jednego shell-a
+
+2.4. Nawigacja
+- nie używaj flow "wchodzę do modułu i wracam oddzielnym ekranem"
+- użyj stałego shell-a:
+  - topbar
+  - obszar główny
+  - przełączanie modułów bez wyjścia z aplikacji
+- przy próbie przełączenia modułu z niezapisanymi zmianami musi pojawić się modal:
+  - Zapisz
+  - Odrzuć
+  - Anuluj
+
+3. AKTYWNE MODUŁY V1
+--------------------
+Aktywne od razu:
+1. Dashboard modułów
+2. Panel Ofertowy
+3. Komunikator
+4. Firma i użytkownicy
+5. Biblioteka produktów i źródła danych
+
+Globalne elementy, nie jako osobne kafle:
+- topbar
+- centrum powiadomień (dzwonek)
+- skrót do komunikatora
+
+Kafle "W produkcji", wyszarzone:
+- Zamówienia
+- Magazyn
+- Finanse / Faktury
+- CRM / Leady
+- Raporty / Statystyki
+- Integracje
+- Ustawienia zaawansowane
+
+Zasada:
+- użytkownik ma widzieć tylko aktywne moduły, do których ma uprawnienie
+- moduły przyszłe można pokazywać jako wyszarzone tylko ownerowi/adminowi albo wszystkim - wybierz spójnie, ale nie zaśmiecaj zwykłego usera
+- dla zwykłego usera preferowane: tylko to, do czego ma dostęp
+
+4. DASHBOARD MODUŁÓW
+--------------------
+4.1. Widok
+- kafelki z ikoną, nazwą i krótkim opisem
+- u góry mały strip podsumowania:
+  - nieprzeczytane rozmowy
+  - nowe pingi
+  - zmiany statusów ofert
+  - oczekujące prośby
+  - liczba użytkowników firmy (dla owner/admin)
+
+4.2. Owner/admin
+- widzi ten sam dashboard co wszyscy
+- ale z dodatkowymi modułami i danymi
+- nie ma osobnej "innej strony startowej"
+
+4.3. UI
+- estetyka oparta o obecny styl panelu ofertowego:
+  - biel / grafit / czarny / subtelne szarości
+  - Poppins
+  - zaokrąglenia
+  - nowoczesne karty
+  - wysoki porządek wizualny
+- shell ma być bardziej "systemowy", ale nadal bardzo spójny z obecnym panelem ofertowym
+
+5. TOPBAR
+---------
+Topbar ma być stały w całym ERP.
+
+Elementy topbara:
+- logo / nazwa Zegger ERP
+- aktualny moduł / breadcrumbs
+- skrót do komunikatora
+- dzwonek powiadomień
+- wyszukiwarka globalna (jeśli zrobisz rozsądnie, mile widziana)
+- avatar / konto użytkownika
+- tryb impersonacji - jeśli aktywny, bardzo wyraźny stan
+
+6. CENTRUM POWIADOMIEŃ
+----------------------
+Po kliknięciu dzwonka:
+- otwiera się centrum powiadomień z sekcjami/tabs:
+  - Wiadomości
+  - Oferty
+  - Prośby
+  - Zaproszenia
+  - System
+
+To nie jest pełny komunikator.
+To jest szybki panel zdarzeń.
+Pełny komunikator istnieje jako osobny moduł.
+
+7. MODUŁ PANEL OFERTOWY
+-----------------------
+7.1. Cel
+- zachować obecny moduł i jego funkcje
+- wpiąć go do ERP shell-a jako moduł
+
+7.2. Twarde wymagania
+- zachować obecny charakter UI
+- nie zubożyć istniejącego flow
+- zachować tworzenie ofert, historię, klientów, PDF, statusy, notatki
+- rozszerzyć go o integrację z komunikatorem i nowym modelem źródeł danych
+
+7.3. Nie rób
+- nie projektuj go jako zupełnie nowego, obcego narzędzia
+- nie zmieniaj bez potrzeby UX, który już działa
+
+8. MODUŁ FIRMA I UŻYTKOWNICY
+----------------------------
+To pełnoprawny aktywny moduł v1.
+Nie ma być tylko prostym popupem.
+
+Zakres:
+- dane firmy
+- lista użytkowników firmy
+- role
+- uprawnienia
+- widoczność modułów
+- reset haseł
+- zawieszanie / odwieszanie kont
+- impersonacja (jeśli uprawniona)
+- relacje z innymi firmami
+- zarządzanie połączeniami firma-firma
+- edycja danych firmy po kliknięciu "Edytuj"
+
+Join requesty i zaproszenia:
+- obsługuj głównie przez centrum powiadomień / dzwonek
+- ale stan relacji i użytkowników ma być widoczny w module Firma i użytkownicy
+
+9. MODUŁ BIBLIOTEKA PRODUKTÓW I ŹRÓDŁA DANYCH
+---------------------------------------------
+To pełnoprawny aktywny moduł v1.
+
+Zakres:
+- konfiguracja Google Sheets
+- synchronizacja danych z Google
+- podgląd cache / status synchronizacji
+- biblioteka lokalna firmy
+- ręczne dodawanie produktów
+- kategorie, podkategorie, warianty, kolory, SKU, ceny, jednostki
+- produkty aktywne / ukryte
+
+10. KOMUNIKATOR
+---------------
+Komunikator:
+- jest pełnoprawnym modułem
+- ma skrót w topbarze
+- jest narzędziem globalnym, nie tylko "dodatkiem do oferty"
+
+Szczegóły w osobnym pliku:
+- 04_COMMUNICATOR_NOTIFICATIONS_AND_RELATIONS_SPEC.txt
+
+11. WERSJA MOBILE
+-----------------
+ERP ma działać jako pełna aplikacja:
+- desktop: shell layout
+- mobile: pełnoekranowo
+- zachowaj czytelność i ergonomię
+- nie wciskaj starego modala ofertowego w małe okienko wewnątrz aplikacji
+
+12. PWA / APP
+-------------
+Na teraz:
+- przygotuj architekturę i strukturę pod przyszłe PWA
+- nie rozwalaj projektu przez próbę pełnego PWA na siłę w v1
+- v1 ma być przede wszystkim stabilnym ERP web-app
+
+13. STARTOWA FIRMA SYSTEMU
+--------------------------
+Zegger Tech ma zostać pierwszą firmą startową.
+To jest pierwszy tenant/systemowy bootstrap.
+Obecne ustawienia starego pluginu mają zostać użyte jako materiał do utworzenia tej pierwszej firmy.
+
+14. HARD UX RULES
+-----------------
+1. Prostota.
+2. Spójność z obecnym panelem ofertowym.
+3. Minimalistyczny, nowoczesny wygląd.
+4. Zero chaosu w nawigacji.
+5. Czytelne komunikaty.
+6. Czytelne statusy.
+7. Czytelny stan "w produkcji" dla nieaktywnych modułów.
+8. Bardzo czytelny stan impersonacji.
+9. Bardzo czytelne blokady przy niezapisanych zmianach.
+10. Zero regresji dla głównego modułu ofertowego.

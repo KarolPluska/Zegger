@@ -1,0 +1,151 @@
+ZEGGER ERP - START HERE FOR CODEX
+=================================
+
+CEL
+----
+Masz przebudować obecny ekosystem:
+- kalkulator: "Źródło - Kalkulator ogrodzeń ZEGGER v1.9.9.1.html"
+- plugin: "zq-offer-suite-v1.2.18.7.zip"
+
+na nowy, kompletny system:
+- nowy plugin: Zegger ERP
+- obecny Panel Ofertowy ma zostać zachowany jako gotowy moduł nowego ERP
+- bez regresji w logice ofert, PDF, historii, klientów i UX modułu ofertowego
+
+PLIKI ŹRÓDŁOWE, KTÓRE MASZ PRZEANALIZOWAĆ NA POCZĄTKU
+----------------------------------------------------
+1. Kalkulator:
+   /mnt/data/Źródło - Kalkulator ogrodzeń ZEGGER v1.9.9.1.html
+
+2. Plugin:
+   /mnt/data/zq-offer-suite-v1.2.18.7.zip
+
+3. Po rozpakowaniu pluginu obecna struktura wygląda tak:
+   zq-offer-suite/
+   - zq-offer-suite.php
+   - includes/class-zqos-db.php
+   - includes/class-zqos-auth.php
+   - includes/class-zqos-rest.php
+   - includes/class-zqos-admin.php
+   - includes/class-zqos-panel.php
+   - includes/class-zqos-sheets.php
+   - includes/class-zqos-maintenance.php
+   - includes/class-zqos-reminders.php
+
+CO JUŻ ISTNIEJE W AKTUALNYM KODZIE
+----------------------------------
+1. W kalkulatorze istnieje własny launcher/login bridge i host iframe.
+   Kluczowe elementy istniejącego HTML/JS:
+   - #zq-login-launch
+   - #zq-login-overlay
+   - #zq-login-form
+   - #zq-offer-host-backdrop
+   - #zq-offer-host-modal
+   - #zq-offer-host-iframe
+   - window.ZQ_OFFER_BRIDGE_URL = '/?zq_offer_panel=1&embed=1&v=...'
+
+2. W pluginie istnieje:
+   - query var panelu: zq_offer_panel=1
+   - embed=1
+   - REST namespace: zq-offer/v1
+   - tabele z prefiksem zqos_
+   - działający moduł Panelu Ofertowego z własnym UI
+   - logowanie i tokeny
+   - klienci
+   - historia ofert
+   - eksport PDF
+   - synchronizacja Google Sheets
+   - podstawowe uprawnienia i impersonacja super-admina
+
+3. Obecne tabele DB:
+   - wp_zqos_accounts
+   - wp_zqos_tokens
+   - wp_zqos_clients
+   - wp_zqos_account_clients
+   - wp_zqos_offers
+   - wp_zqos_events
+   - wp_zqos_sheets_cache
+
+NOWA DECYZJA PRODUKTOWA
+-----------------------
+Nie rozwijamy już "Panelu ofertowego" jako samodzielnego produktu.
+Budujemy nowy system nadrzędny:
+- Zegger ERP
+
+Panel Ofertowy:
+- zostaje zachowany
+- pozostaje wizualnie i logicznie rozpoznawalny
+- ale staje się jednym z modułów systemu ERP
+
+TWARDE ZASADY - NIE WOLNO TEGO ZEPSUĆ
+-------------------------------------
+1. Nie wolno utracić obecnego modułu Panel Ofertowy.
+2. Nie wolno zepsuć obecnego flow tworzenia ofert.
+3. Nie wolno zepsuć obecnego eksportu PDF.
+4. Nie wolno zepsuć obecnej historii ofert.
+5. Nie wolno zepsuć klientów i notatek w ofertach.
+6. Nie wolno wizualnie zdegradować obecnego modułu ofertowego.
+7. Nie wolno tworzyć nowego modułu ofertowego "od zera", jeśli da się zachować i osadzić istniejący UX/logikę.
+8. Nowa architektura może być nowa, ale obecne funkcje ofertowe mają pozostać i działać.
+
+NOWE NAZEWNICTWO TECHNICZNE - KANON
+-----------------------------------
+Ustandaryzuj nowy system tak:
+
+- Nazwa pluginu: Zegger ERP
+- Folder pluginu: zegger-erp
+- Główny slug/system slug: zegger-erp
+- REST namespace: zegger-erp/v1
+- PHP class prefix: ZERP_
+- DB table prefix (po wp_): zerp_
+- JS global namespace: window.ZEGGER_ERP
+
+Jeżeli w implementacji musisz utrzymać kompatybilność legacy, możesz zostawić wybrane warstwy zgodności dla starych endpointów, ale nowy kod ma być już oparty o nowe nazewnictwo.
+
+EFEKT KOŃCOWY, KTÓRY MASZ DOSTARCZYĆ
+------------------------------------
+1. W pełni działający nowy plugin Zegger ERP.
+2. Migrację / import / zachowanie obecnych funkcji Panelu Ofertowego.
+3. Nowy ERP shell:
+   - logowanie / rejestracja
+   - dashboard modułów
+   - topbar
+   - komunikator
+   - centrum powiadomień
+   - firma i użytkownicy
+   - biblioteka produktów / źródła danych
+   - moduł Panel Ofertowy
+4. Zaktualizowany kalkulator:
+   - bez starego ciężkiego modala logowania/panelu
+   - tylko lekki przycisk/launcher do Zegger ERP
+5. Instrukcję wdrożenia:
+   - jak przejść ze starej wersji do nowej
+   - jak aktywować nowy plugin
+   - jak podmienić kod kalkulatora
+6. Rollback plan.
+7. Finalne pliki wdrożeniowe, nie sam plan.
+
+TWARDE OCZEKIWANIE WOBEC CIEBIE
+-------------------------------
+Masz wykonać komplet:
+- kod
+- migracje
+- nowe tabele
+- nowe endpointy
+- nowe UI
+- integrację z obecnym modułem ofertowym
+- aktualizację kalkulatora
+- instrukcję wdrożenia
+
+Nie twórz wyłącznie ogólnego planu.
+Masz przygotować wdrożeniowy rezultat.
+
+KOLEJNOŚĆ CZYTANIA TEGO PAKIETU
+-------------------------------
+1. 00_START_HERE_FOR_CODEX.txt
+2. 01_MASTER_SPEC_ZEGGER_ERP.txt
+3. 02_AUTH_COMPANY_USERS_PERMISSIONS_SPEC.txt
+4. 03_PRODUCTS_OFFERS_AND_SOURCES_SPEC.txt
+5. 04_COMMUNICATOR_NOTIFICATIONS_AND_RELATIONS_SPEC.txt
+6. 05_TECHNICAL_ARCHITECTURE_MIGRATION_AND_CALCULATOR_SPEC.txt
+7. 06_TASKLIST_ACCEPTANCE_AND_DELIVERABLES.txt

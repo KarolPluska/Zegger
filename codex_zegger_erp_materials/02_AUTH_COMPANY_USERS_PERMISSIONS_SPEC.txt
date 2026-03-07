@@ -1,0 +1,297 @@
+ZEGGER ERP - AUTH / FIRMA / UŻYTKOWNICY / UPRAWNIENIA
+====================================================
+
+1. LOGOWANIE I REJESTRACJA
+--------------------------
+1.1. Logowanie
+- standard: login + hasło
+- ma działać jako część nowej aplikacji ERP
+- nie przenoś starego modala 1:1 z kalkulatora do środka ERP
+- kalkulator ma tylko uruchamiać wejście do ERP
+
+1.2. Rejestracja
+Na starcie użytkownik wybiera:
+- zakładam nową firmę
+- zakładam konto użytkownika i dołączam do istniejącej firmy
+
+Zrób to jako czytelny wizard krok po kroku, z opisami i wskazówkami.
+
+2. REJESTRACJA NOWEJ FIRMY
+--------------------------
+2.1. Dane wymagane:
+- imię
+- nazwisko
+- email
+- telefon
+- hasło
+
+Dane firmy wymagane:
+- nazwa firmy
+- NIP
+- adres
+- email firmowy
+- telefon firmowy
+
+Dane opcjonalne później:
+- WWW
+- logo
+
+2.2. Reguły:
+- NIP firmy musi być unikalny w całym systemie
+- nie wolno dopuścić duplikatu firmy po NIP
+- po poprawnej rejestracji tworzysz:
+  - firmę
+  - ownera firmy
+  - pustą konfigurację firmy
+  - pustą bibliotekę lokalną
+  - opcjonalnie pustą konfigurację Google source
+
+2.3. Flow:
+- rejestracja ma być logiczna i intuicyjna
+- krok po kroku
+- z podpowiedziami, co oznacza dany wybór
+- po utworzeniu konta: ekran potwierdzenia + przejście do dashboardu ERP
+
+3. REJESTRACJA KONTA UŻYTKOWNIKA DO ISTNIEJĄCEJ FIRMY
+-----------------------------------------------------
+3.1. Dane wymagane:
+- imię
+- nazwisko
+- email
+- telefon
+- hasło
+- identyfikacja firmy docelowej
+
+3.2. Identyfikacja firmy
+Wyszukiwanie ma działać:
+- po nazwie
+- po kluczu/join_code
+- dynamicznie
+
+Na liście wyników pokazuj:
+- nazwę firmy
+- NIP
+- adres / miasto
+- telefon
+- administratora
+
+3.3. Reguły:
+- użytkownik wysyła prośbę o dołączenie do jednej firmy
+- jedna aktywna prośba naraz
+- konto bez firmy ma TTL 7 dni od daty rejestracji
+- po TTL konto bez firmy jest kasowane twardo
+- licznik TTL pokazuj tylko w widoku konta bez firmy
+- progi ostrzeżeń:
+  - żółty <= 72h
+  - czerwony <= 24h
+
+3.4. Po odrzuceniu
+- użytkownik dostaje jednorazową notyfikację po zalogowaniu
+- konto nadal może istnieć do końca TTL
+- może poprawić dane i wysłać prośbę ponownie
+
+4. MODEL KONT I FIRM
+--------------------
+4.1. Podstawy
+- 1 konto należy do maksymalnie 1 firmy
+- 1 firma ma 1 właściciela (owner/admin główny)
+- właściciel nie przekazuje ownership innemu kontu
+- nie ma wielu ownerów
+
+4.2. Role biznesowe
+- owner
+- manager
+- user
+
+4.3. Kluczowa zasada
+Owner:
+- widzi wszystko w firmie
+- ma pełen dostęp
+- nie może odebrać sam sobie krytycznych uprawnień
+- nie może zawiesić samego siebie
+- nie może ukryć sam sobie modułów
+- nie może wyłączyć sobie impersonacji
+
+5. IMPERSONACJA / PRZEŁĄCZANIE KONT
+-----------------------------------
+5.1. Kto może
+- owner zawsze
+- manager tylko jeśli owner da mu to uprawnienie
+
+5.2. Zachowanie
+- owner/manager może przełączyć się na konto przypisane do tej samej firmy
+- po przełączeniu musi być bardzo wyraźny stan UI:
+  - mocny pasek
+  - informacja "Jesteś w trybie konta: X"
+  - przycisk "Wróć do swojego konta"
+
+5.3. Zawieszone konta
+- nie mogą się logować samodzielnie
+- komunikat przy logowaniu: konto zawieszone
+- owner przez impersonację może wejść na konto zawieszone i je odblokować
+
+6. MODUŁ FIRMA I UŻYTKOWNICY - ZAKRES
+------------------------------------
+6.1. Dane firmy
+- nazwa
+- NIP
+- adres
+- email
+- telefon
+- WWW
+- logo
+- join_code / company key
+- status firmy
+- daty utworzenia/aktualizacji
+
+6.2. Użytkownicy
+- lista użytkowników firmy
+- tworzenie nowych kont
+- edycja danych kont
+- reset hasła
+- zawieszanie / odwieszanie
+- przypisywanie roli
+- przypisywanie widoczności modułów
+- przypisywanie uprawnień per moduł i akcja
+
+6.3. Relacje firma-firma
+- lista firm połączonych
+- status relacji
+- limity rabatowe w obie strony
+- możliwość rozłączenia / dezaktywacji relacji
+- szczegóły relacji
+
+6.4. Tryb edycji
+- nie inline-by-default
+- najpierw podgląd
+- edycja po kliknięciu "Edytuj"
+
+7. JOIN CODE / COMPANY KEY
+--------------------------
+- firma ma unikalny klucz do identyfikacji/dołączenia
+- owner może go regenerować
+- zwykły user nie widzi tych ustawień, jeśli nie ma uprawnienia
+
+8. UPRAWNIENIA - MODEL
+----------------------
+8.1. Poziom 1: widoczność modułu
+Wymagane flagi:
+- dashboard_access
+- offers_module_access
+- communicator_module_access
+- company_users_module_access
+- catalog_module_access
+
+8.2. Poziom 2: akcje w module
+Owner ma wszystko.
+Manager i user mają granularne akcje.
+
+9. PEŁNA MACIERZ UPRAWNIEŃ - MINIMUM DO ZAIMPLEMENTOWANIA
+---------------------------------------------------------
+9.1. Global
+- can_impersonate_accounts
+- can_view_notifications
+- can_manage_notification_items (w zakresie firmy)
+
+9.2. Firma i użytkownicy
+- can_view_company_profile
+- can_edit_company_profile
+- can_manage_company_branding
+- can_manage_join_code
+- can_view_company_members
+- can_create_company_members
+- can_edit_company_members
+- can_suspend_company_members
+- can_reset_member_passwords
+- can_assign_module_visibility
+- can_assign_member_permissions
+- can_manage_company_relations
+
+9.3. Biblioteka produktów i źródła
+- can_view_sources
+- can_manage_google_source
+- can_force_google_sync
+- can_view_sync_logs
+- can_manage_internal_catalog
+- can_manage_catalog_categories
+- can_manage_catalog_variants
+- can_archive_catalog_items
+
+9.4. Panel ofertowy
+- can_view_offers_module
+- can_create_offers
+- can_edit_offers
+- can_delete_own_offers
+- can_delete_company_offers
+- can_export_offer_pdf
+- can_change_offer_status
+- can_bind_offer_to_chat
+- can_send_offer_to_relation
+- can_manage_offer_lock
+- can_view_all_company_clients
+- can_manage_company_clients
+
+9.5. Komunikator
+- can_view_communicator
+- can_create_threads
+- can_send_messages
+- can_upload_attachments
+- can_ping_users
+- can_close_threads
+- can_reopen_threads
+- can_change_linked_offer_status
+- can_manage_thread_participants
+- can_view_all_relation_threads
+
+10. ZASADA WIDOCZNOŚCI
+---------------------
+- użytkownik widzi tylko moduły, do których ma dostęp
+- owner widzi wszystko
+- manager widzi to, co owner mu przyznał
+- user widzi tylko przydzielony zakres
+
+11. JOIN REQUESTY I ZAPROSZENIA
+-------------------------------
+Obsługuj przez:
+- centrum powiadomień (główne miejsce reakcji)
+- oraz widoczny stan relacji/użytkowników w module Firma i użytkownicy
+
+12. KATEGORIE ROZMÓW
+--------------------
+Lista kategorii rozmów ma być zarządzalna z backendu pluginu.
+Default categories:
+- Ogólne
+- Zapytanie ofertowe
+- Zamówienie
+- Reklamacja
+- Techniczne
+- Rozliczenia
+- Inne
+
+Zrób możliwość dodania własnych kategorii bez grzebania w kodzie.
+
+13. OWNER SAFETY RULES
+----------------------
+Owner nie może:
+- zawiesić samego siebie
+- ukryć sobie modułów
+- odebrać sobie możliwości impersonacji
+- zostać bez drogi odzyskania kontroli nad firmą
+
+14. JEŚLI MIGRACJA KONT BĘDZIE ZŁOŻONA
+-------------------------------------
+Dopuszczalne:
+- nie migrować starych kont 1:1, jeśli to komplikuje ERP
+- ale nie wolno przez to utracić danych ofert/klientów/PDF
+- minimum:
+  - utworzyć Zegger Tech jako pierwszą firmę
+  - dać owner bootstrapowy
+  - pozwolić ręcznie zbudować nowe konta
+
+Jeżeli jednak konto legacy można bezpiecznie zmigrować, zrób to.
+Priorytetem nie są stare konta.
+Priorytetem są:
+- firmy
+- dane
+- moduł ofertowy
+- funkcje

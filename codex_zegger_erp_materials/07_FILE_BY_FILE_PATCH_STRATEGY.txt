@@ -1,0 +1,678 @@
+ZEGGER ERP - FILE BY FILE PATCH STRATEGY
+========================================
+
+CEL DOKUMENTU
+-------------
+Ten plik mówi dokładnie jak przejść od obecnej wersji legacy do nowej wersji Zegger ERP.
+Nie jest to tylko plan architektury. To jest praktyczna strategia plik-po-pliku:
+- co przeanalizować
+- co zachować
+- co przepisać
+- co rozbić na nowe klasy
+- co usunąć z kalkulatora
+- co zostawić jako kompatybilność
+- jakie nowe pliki/foldery utworzyć
+
+ŹRÓDŁA, KTÓRE MUSISZ PRZEANALIZOWAĆ
+-----------------------------------
+1. Folder legacy pluginu:
+- zq-offer-suite/
+
+2. ZIP legacy pluginu:
+- zq-offer-suite-v1.2.18.7.zip
+
+3. Kalkulator / launcher host:
+- Źródło - Kalkulator ogrodzeń ZEGGER v1.9.9.1.html
+
+4. Folder materiałów dla Ciebie:
+- codex_zegger_erp_materials/
+
+ZAŁOŻENIE GŁÓWNE
+----------------
+Budujesz nowy plugin Zegger ERP.
+Nie rób kosmetycznej łaty starego pluginu.
+Masz wykorzystać legacy jako bazę funkcjonalną, wzorzec i źródło danych, ale finalnie dostarczyć nową, pełną wersję systemu ERP.
+
+Równocześnie:
+- nie wolno stracić obecnego modułu Panel ofertowy
+- nie wolno zepsuć jego flow, PDF, historii ofert i logiki pracy
+- możesz całkowicie przebudować architekturę, jeśli zachowasz działanie i UX modułu ofertowego
+
+REKOMENDOWANY MODEL PRACY
+-------------------------
+1. NIE edytuj legacy folderu jako finalnego runtime pluginu.
+2. Utwórz nowy plugin folder, np.:
+- zegger-erp/
+3. Do nowego pluginu przenieś i przebuduj logikę legacy.
+4. Legacy potraktuj jako źródło migracji, referencji i komponentów do adaptacji.
+5. Jeśli potrzebujesz adapterów zgodności, zrób je świadomie i cienko.
+
+
+CZĘŚĆ I - INWENTARYZACJA LEGACY I MAPA PRZENIESIENIA
+====================================================
+
+A. ROOT LEGACY
+--------------
+Plik:
+- zq-offer-suite/zq-offer-suite.php
+
+OBECNA ROLA:
+- bootstrap pluginu
+- define constants
+- include klas legacy
+- activation/deactivation hooks
+- init wszystkich modułów
+
+CO ZROBIĆ:
+- nie używaj tego pliku jako finalnego pliku głównego nowego systemu
+- na jego bazie stwórz nowy bootstrap:
+  - zegger-erp/zegger-erp.php
+- zaktualizuj:
+  - nazwę pluginu
+  - versioning
+  - constants
+  - ładowanie klas nowej architektury
+  - activation/deactivation hooks dla nowego DB/schema/maintenance
+
+CO ZACHOWAĆ KONCEPCYJNIE:
+- klarowny bootstrap startowy
+- centralne ładowanie modułów
+- activation/deactivation lifecycle
+
+CO ZMIENIĆ:
+- prefix klas: z ZQOS_* na ZERP_* lub spójny nowy prefiks
+- namespace REST: z zq-offer/v1 na zegger-erp/v1
+- plugin metadata: nazwa "Zegger ERP"
+- rozdział modułów na ERP shell / companies / permissions / chat / notifications / offers / products
+
+
+B. includes/class-zqos-db.php
+-----------------------------
+OBECNA ROLA:
+- db version
+- tworzenie tabel legacy
+- opcje pluginu
+- bootstrap settings
+- access do tabel legacy
+
+CO ZROBIĆ:
+- nie patchuj tego pliku dalej jako centralnego DB layer
+- rozbij logikę na:
+  - includes/class-zerp-db.php
+  - includes/class-zerp-migration.php
+  - ewentualnie includes/class-zerp-schema.php
+
+CO PRZENIEŚĆ:
+- doświadczenia z dbDelta
+- wzorzec maybe_upgrade/activate/init
+- settings storage, jeśli ma sens
+- utilities do pobierania prefiksowanych tabel
+
+CO DODAĆ:
+- nowy model tabel dla ERP:
+  - companies
+  - company_members
+  - member_permissions
+  - join_requests
+  - company_relations
+  - relation_events
+  - google_sources
+  - google_cache
+  - catalog entities
+  - offers
+  - offer_events
+  - offer_chat_links
+  - thread/thread_messages/thread_attachments/thread_events/thread_pings
+  - notifications / notification_reads
+  - categories rozmów
+  - module visibility / module permissions
+
+CO ZROBIĆ Z LEGACY DANYMI:
+- przygotować migratory/importery:
+  - oferty
+  - eventy ofert
+  - klienci
+  - pdf archive / referencje plików
+  - settings Sheets/tabs/gids
+- migracja kont legacy jest opcjonalna i nie powinna blokować wdrożenia
+- Zegger Tech ma zostać stworzona jako bootstrapowa pierwsza firma
+
+WYMAGANIE:
+- nowy DB layer ma być jednoznacznie oddzielony od legacy
+- jeśli potrzebujesz odczytu danych legacy podczas migracji, zrób to przez migration service, nie mieszaj obu modeli stale
+
+
+C. includes/class-zqos-auth.php
+-------------------------------
+OBECNA ROLA:
+- bearer token / cookie fallback
+- current account
+- session auth logic
+- impersonation basics
+
+CO ZROBIĆ:
+- wykorzystaj ten plik jako referencję do nowego auth modelu
+- zbuduj nowy plik:
+  - includes/class-zerp-auth.php
+
+CO ZACHOWAĆ KONCEPCYJNIE:
+- token-based auth
+- możliwość używania Authorization: Bearer
+- sanityzacja tokenu
+- session/token store po stronie DB
+
+CO ZMIENIĆ:
+- auth ma być podporządkowany nowemu modelowi firm, ról i modułów
+- owner/admin/manager/user + permissions matrix
+- impersonation ma być jawna w UI i respektować uprawnienia
+- suspended account ma być blokowane natychmiast
+- dołącz obsługę:
+  - rejestracji firmy
+  - rejestracji użytkownika do istniejącej firmy
+  - join requests
+  - owner bootstrap
+
+DECYZJA DOT. KALKULATORA:
+- nie zakładaj już, że kalkulator jest głównym hostem auth
+- kalkulator ma być tylko launcherem do ERP
+- pełna sesja ma żyć po stronie nowej aplikacji ERP
+
+
+D. includes/class-zqos-rest.php
+-------------------------------
+OBECNA ROLA:
+- główne REST API legacy panelu ofertowego
+- statusy ofert
+- blokady ofert
+- CRUD powiązany z panelem ofertowym
+
+CO ZROBIĆ:
+- nie rozwijaj tego pliku dalej jako głównego API nowego ERP
+- rozbij na nowe klasy domenowe i routery:
+  - includes/class-zerp-rest.php
+  - ewentualnie osobne route registries per domena
+
+REKOMENDOWANY PODZIAŁ API:
+- auth
+- app shell
+- companies
+- members
+- permissions
+- relations
+- google source
+- local catalog
+- offers
+- offer pdf
+- threads/chat
+- notifications
+- admin tools
+- migration
+
+LEGACY COMPATIBILITY:
+- jeśli potrzebujesz zachować część starych endpointów dla szybkiego wpięcia modułu ofertowego, zrób adaptery
+- ale logika docelowa ma działać na nowym namespace: zegger-erp/v1
+
+STATUSY OFERT:
+- zmapuj legacy statusy na nowy model bez regresji
+- zachowaj semantykę działania obecnego modułu ofertowego
+- dołóż nowe konsekwencje w komunikatorze i powiadomieniach
+
+
+E. includes/class-zqos-panel.php
+--------------------------------
+OBECNA ROLA:
+- renderer Panelu Ofertowego jako kompletnego UI
+- inline CSS
+- inline JS
+- HTML shell
+- embed mode
+- logika klienta legacy
+
+TO JEST JEDEN Z NAJWAŻNIEJSZYCH PLIKÓW LEGACY.
+
+CO ZROBIĆ:
+- nie wolno stracić efektu końcowego tego modułu
+- ale nie trzymaj całości dalej jako monolitycznego inline renderer-a
+- rozbij ten moduł na nową strukturę assets + render layer
+
+DOCZELOWY KIERUNEK:
+- stwórz ERP shell jako nową aplikację
+- Panel ofertowy ma być modułem wewnątrz shell-a
+- NIE przez wewnętrzny iframe
+- NIE przez drugi stary embed shell
+- tylko jako zintegrowany view modułowy
+
+KONKRETNIE:
+1. Wydziel z legacy:
+- HTML struktury modułu ofertowego
+- CSS modułu ofertowego
+- JS modułu ofertowego
+- stan/aplikację modułu ofertowego
+
+2. Przenieś do nowych plików, np.:
+- assets/css/erp-shell.css
+- assets/css/module-offers.css
+- assets/js/erp-shell.js
+- assets/js/module-offers.js
+- includes/class-zerp-app.php
+- includes/class-zerp-module-offers.php
+
+3. Zachowaj:
+- layout i UX panelu ofertowego
+- flow tworzenia ofert
+- logikę PDF
+- historię ofert
+- klientów
+- wszystkie dobrze działające elementy obecnego modułu
+
+4. Dodaj:
+- guard niezapisanych zmian przy przełączaniu modułu
+- integrację z topbar
+- integrację z komunikatorem
+- integrację z powiadomieniami
+- linkowanie oferty <-> rozmowa
+
+WYMAGANIE KRYTYCZNE:
+- moduł ofertowy ma wyglądać i działać jak obecny, ale ma żyć w nowej aplikacji ERP
+
+
+F. includes/class-zqos-admin.php
+--------------------------------
+OBECNA ROLA:
+- backend WP admin
+- ustawienia
+- konta
+- klienci
+- oferty
+- statystyki
+
+CO ZROBIĆ:
+- potraktuj ten plik jako wzorzec, nie jako finalny backend admin ERP
+- zbuduj nowy plik:
+  - includes/class-zerp-admin.php
+
+NOWE PANELE ADMIN WP:
+- Firmy
+- Użytkownicy firmowi
+- Kategorie rozmów
+- Diagnostyka źródeł Google
+- Diagnostyka katalogu lokalnego
+- Powiadomienia/system maintenance
+- Migracja legacy
+- ewentualnie ustawienia globalne ERP
+
+CO PRZENIEŚĆ:
+- sprawdzone techniki obsługi admin_post
+- nonces / capability checks
+- rendering paneli WP
+
+CO ZMIENIĆ:
+- account-centric model zastąpić company-centric modelem
+- legacy settings podzielić między:
+  - global ERP settings
+  - company settings
+  - source settings
+  - module settings
+
+
+G. includes/class-zqos-sheets.php
+---------------------------------
+OBECNA ROLA:
+- synchronizacja Google Sheets
+- cache
+- harmonogram cron
+- pobieranie workbooka
+
+TO JEST KRYTYCZNA BAZA DLA NOWEGO MODUŁU BIBLIOTEKI/ŹRÓDEŁ.
+
+CO ZROBIĆ:
+- przenieś logikę do nowego pliku:
+  - includes/class-zerp-google-sources.php
+
+CO ZACHOWAĆ:
+- cron sync
+- cache
+- single-download workbook strategy
+- interwały 1/5/10/15 min
+- ochrona przed równoległym sync
+
+CO DODAĆ:
+- źródło Google przypisane do firmy
+- tylko jedno główne źródło Google na firmę
+- możliwość równoległego używania lokalnego katalogu produktów
+- parser wariantów kolorów/SKU:
+  - kolumna "Nr towaru" = wariant kolorystyczny "Brak"
+  - kolumny "Nr towaru RAL 6000", "Nr towaru RAL 7016" itd. = osobne warianty kolorów i SKU
+  - parser ma dynamicznie wykrywać takie kolumny
+  - nowe kolory mają być wykrywane automatycznie z arkusza
+
+WAŻNE:
+- Google source jest bazą synchronizowaną
+- lokalne produkty to osobna warstwa, nie nadpisująca danych z Google
+- w pickerze ofert dla własnej firmy dane z Google i lokalne mają być wyświetlane razem jako jedna lista
+- ale wewnętrznie źródło musi być rozróżnialne
+
+
+H. includes/class-zqos-maintenance.php
+--------------------------------------
+OBECNA ROLA:
+- cleanup
+- retencja
+- storage maintenance
+
+CO ZROBIĆ:
+- rozbuduj jako:
+  - includes/class-zerp-maintenance.php
+
+CO DODAĆ:
+- cleanup attachments po 12 miesiącach
+- pozostawianie eventu "Plik wygasł" w czacie
+- cleanup orphan accounts po 7 dniach
+- maintenance powiadomień
+- diagnostyka niespójności powiązań offer<->thread
+- narzędzia migracyjne i sanity checks po migracji
+
+
+I. includes/class-zqos-reminders.php
+------------------------------------
+OBECNA ROLA:
+- system przypominania ofertowego
+
+CO ZROBIĆ:
+- przenieść jako część nowego offer/notification engine
+- nie musi pozostać jako osobny moduł, jeśli logiczniej zintegrujesz to z notifications
+
+WYMAGANIE:
+- jeśli przypomnienia legacy są przydatne, zachowaj ich efekt biznesowy
+- ale dopasuj do nowego modelu statusów, komunikatora i powiadomień
+
+
+J. assets/ (legacy)
+-------------------
+OBECNY STAN:
+- folder assets istnieje, ale legacy panel duży ciężar trzyma inline w PHP
+
+CO ZROBIĆ:
+- przenieś CSS/JS z rendererów inline do realnych assetów
+- zbuduj strukturę assets nowego pluginu
+
+REKOMENDOWANA STRUKTURA:
+- assets/css/erp-shell.css
+- assets/css/module-auth.css
+- assets/css/module-dashboard.css
+- assets/css/module-offers.css
+- assets/css/module-company.css
+- assets/css/module-products.css
+- assets/css/module-chat.css
+- assets/css/module-notifications.css
+- assets/js/erp-shell.js
+- assets/js/module-auth.js
+- assets/js/module-dashboard.js
+- assets/js/module-offers.js
+- assets/js/module-company.js
+- assets/js/module-products.js
+- assets/js/module-chat.js
+- assets/js/module-notifications.js
+- assets/js/shared-api.js
+- assets/js/shared-state.js
+- assets/js/shared-ui.js
+
+WYMAGANIE UI:
+- zachowaj estetykę legacy
+- scope CSS
+- brak regresji modułu ofertowego
+- shell ma być spójny z obecnym stylem
+
+
+CZĘŚĆ II - NOWE PLIKI, KTÓRE MASZ UTWORZYĆ
+=========================================
+
+UTWÓRZ NOWY PLUGIN FOLDER
+------------------------
+Rekomendacja:
+- zegger-erp/
+
+MINIMALNY ZESTAW PLIKÓW
+----------------------
+- zegger-erp/zegger-erp.php
+- zegger-erp/includes/class-zerp-db.php
+- zegger-erp/includes/class-zerp-migration.php
+- zegger-erp/includes/class-zerp-auth.php
+- zegger-erp/includes/class-zerp-rest.php
+- zegger-erp/includes/class-zerp-app.php
+- zegger-erp/includes/class-zerp-admin.php
+- zegger-erp/includes/class-zerp-companies.php
+- zegger-erp/includes/class-zerp-members.php
+- zegger-erp/includes/class-zerp-permissions.php
+- zegger-erp/includes/class-zerp-relations.php
+- zegger-erp/includes/class-zerp-google-sources.php
+- zegger-erp/includes/class-zerp-catalog.php
+- zegger-erp/includes/class-zerp-offers.php
+- zegger-erp/includes/class-zerp-offer-pdf.php
+- zegger-erp/includes/class-zerp-chat.php
+- zegger-erp/includes/class-zerp-notifications.php
+- zegger-erp/includes/class-zerp-maintenance.php
+
+ASSETS
+------
+- zegger-erp/assets/css/*.css
+- zegger-erp/assets/js/*.js
+- zegger-erp/assets/icons/*
+
+NIE MUSISZ trzymać dokładnie tych nazw, ale zachowaj porządek domenowy.
+
+
+CZĘŚĆ III - KALKULATOR: CO USUNĄĆ, CO ZASTĄPIĆ
+==============================================
+
+PLIK:
+- Źródło - Kalkulator ogrodzeń ZEGGER v1.9.9.1.html
+
+OBECNY STAN (MARKERY DO ANALIZY)
+--------------------------------
+W pliku istnieją m.in.:
+- #zq-login-overlay
+- window.ZQ_OFFER_BRIDGE_URL
+- #zq-offer-host-backdrop
+- #zq-offer-host-modal
+- #zq-offer-host-iframe
+- pełny bridge host do starego panelu ofertowego
+
+DOCZELOWY STAN
+--------------
+Kalkulator ma przestać być hostem starego panelu ofertowego.
+Ma zostać tylko launcherem / przyciskiem wejścia do Zegger ERP.
+
+CO ZROBIĆ PRAKTYCZNIE
+---------------------
+1. Zidentyfikuj i usuń / zastąp starą logikę:
+- starego modala logowania
+- starego hosta iframe panelu ofertowego
+- starej obsługi bridge do Panelu Ofertowego
+
+2. Zastąp to lekkim launcherem Zegger ERP:
+- przycisk
+- ewentualny prosty modal/overlay wejściowy, jeśli potrzebny
+- docelowo otwarcie pełnej aplikacji ERP
+
+3. Nie duplikuj w kalkulatorze:
+- auth logic
+- panel logic
+- komunikatora
+- dashboardu ERP
+
+4. Kalkulator ma zawierać tylko to, co konieczne do uruchomienia wejścia do ERP:
+- przycisk
+- konfigurację URL/entry point
+- minimalny glue code
+
+WYMAGANIE KOŃCOWE:
+- użytkownik ma dostać gotowy, podmienialny kod kalkulatora
+- po podmianie ma działać wejście do Zegger ERP zamiast starego osadzenia panelu ofertowego
+
+
+CZĘŚĆ IV - CO ZROBIĆ Z LEGACY KODEM OFERTOWYM
+=============================================
+
+TEGO NIE WOLNO STRACIĆ
+----------------------
+- wygląd modułu ofertowego
+- flow tworzenia oferty
+- PDF
+- historia ofert
+- klienci
+- działające funkcje handlowe obecnego panelu
+
+STRATEGIA
+---------
+1. Wyciągnij z legacy panelu ofertowego to, co jest dojrzałe.
+2. Wbuduj to w nową architekturę jako moduł ERP.
+3. Nie przepisywuj bezmyślnie wszystkiego od zera, jeśli istnieją działające algorytmy i UI.
+4. Jeśli jednak legacy kod jest zbyt monolityczny, przepisz go warstwowo, ale zachowaj zachowanie końcowe.
+
+KONKRETNIE:
+- przenieś stare repozycje/algorytmy ofertowe do nowego modelu offer service
+- przenieś PDF generation do wydzielonego modułu
+- przenieś klientów do nowego company-scoped modelu
+- zachowaj event/history semantics
+
+
+CZĘŚĆ V - FILE BY FILE WYKONANIE W PRAKTYCE
+===========================================
+
+ETAP 1 - ANALIZA I SNAPSHOT
+---------------------------
+1. Przeczytaj wszystkie pliki legacy pluginu.
+2. Spisz:
+- wszystkie tabele legacy
+- wszystkie endpointy legacy
+- wszystkie funkcje auth
+- wszystkie funkcje panelu ofertowego
+- wszystkie miejsca, gdzie kalkulator zależy od starego pluginu
+3. Sprawdź dokładnie HTML kalkulatora i oznacz bloki do wycięcia/zastąpienia.
+4. Nie zaczynaj kodowania bez pełnej mapy zależności.
+
+ETAP 2 - NOWY SKELETON PLUGINU
+------------------------------
+1. Utwórz nowy folder pluginu Zegger ERP.
+2. Zbuduj bootstrap.
+3. Dodaj nowy DB schema.
+4. Dodaj migrator.
+5. Dodaj nowy REST namespace.
+6. Dodaj shell app.
+
+ETAP 3 - AUTH / FIRMY / UŻYTKOWNICY / PERMISSIONS
+-------------------------------------------------
+1. Wdroż nowy auth.
+2. Wdroż firmy.
+3. Wdroż rejestrację firmy i usera.
+4. Wdroż join requests.
+5. Wdroż visibility modułów.
+6. Wdroż impersonation.
+
+ETAP 4 - MODUŁ FIRMA I UŻYTKOWNICY
+----------------------------------
+1. Lista członków firmy.
+2. Uprawnienia.
+3. Powiązane firmy.
+4. Zarządzanie aktywnością kont.
+5. Edycja danych firmy.
+
+ETAP 5 - ŹRÓDŁA DANYCH I KATALOG LOKALNY
+----------------------------------------
+1. Jedno źródło Google per firma.
+2. Sync/cache.
+3. Parser kolorów i SKU.
+4. Wewnętrzna biblioteka produktów.
+5. Jeden wspólny picker danych dla własnej firmy (Google + lokalne jako jedna lista).
+6. Przełączanie kontekstu firmy przy relacjach firma-firma.
+
+ETAP 6 - MODUŁ OFERTOWY
+-----------------------
+1. Osadź panel ofertowy jako moduł ERP.
+2. Zachowaj UI/UX.
+3. Podłącz nowy auth, new routes, company scope.
+4. Dodaj linkowanie offer<->thread.
+5. Dodaj full unsaved changes guard.
+
+ETAP 7 - KOMUNIKATOR
+--------------------
+1. Wątki ogólne i ofertowe.
+2. Pingi do użytkowników.
+3. Kategorie rozmów.
+4. Powiązania relacyjne A↔B.
+5. Twarde reguły 1 oferta = 1 chat i 1 chat = max 1 oferta.
+6. Pełna historia zmian oferty w czacie.
+7. Załączniki, retencja, wygasanie.
+8. Zamykanie/wznawianie rozmów z powodem.
+
+ETAP 8 - POWIADOMIENIA
+----------------------
+1. Centrum powiadomień.
+2. Dzwonek.
+3. Typy zdarzeń.
+4. Liczniki.
+5. Integracja z chat/offers/join requests/invites.
+
+ETAP 9 - KALKULATOR
+-------------------
+1. Usuń starą logikę hostowania panelu.
+2. Dodaj nowy launcher ERP.
+3. Zachowaj prostotę integracji.
+4. Dostarcz gotowy plik do podmiany.
+
+ETAP 10 - MIGRACJA I FINALIZACJA
+--------------------------------
+1. Zmigruj dane krytyczne.
+2. Utwórz bootstrapową firmę Zegger Tech.
+3. Zweryfikuj integralność offer history / PDF / clients.
+4. Wygeneruj finalny plugin ZIP.
+5. Przygotuj instrukcję aktualizacji i rollback.
+
+
+CZĘŚĆ VI - CZEGO NIE ROBIĆ
+==========================
+
+NIE RÓB TEGO
+------------
+1. Nie próbuj doklejać całego ERP do starego pliku class-zqos-panel.php.
+2. Nie zostawiaj kalkulatora jako głównego hosta systemu.
+3. Nie projektuj komunikatora jako prostego czatu bez modelu relacji A↔B.
+4. Nie pozwalaj na wysłanie oferty utworzonej w relacji A↔B do firmy C.
+5. Nie pozwalaj na wiele ofert w jednym czacie lub jeden offer object w wielu czatach.
+6. Nie trzymaj wszystkiego inline w jednym rendererze PHP.
+7. Nie psuj UX obecnego modułu ofertowego.
+8. Nie twórz regresji przez pochopne usuwanie sprawdzonych algorytmów legacy.
+9. Nie zakładaj, że wszystkie stare konta muszą zostać zachowane 1:1, jeśli utrudnia to prawidłową architekturę.
+10. Nie mieszaj odpowiedzialności modułów - firma/użytkownicy, źródła/katalog, oferty, komunikator, powiadomienia mają być rozdzielone logicznie.
+
+
+CZĘŚĆ VII - MATERIAŁ WYJŚCIOWY, KTÓRY MASZ DOSTARCZYĆ
+====================================================
+
+MUSISZ ODDaĆ
+------------
+1. Nowy plugin Zegger ERP.
+2. Gotowy ZIP pluginu.
+3. Gotowy folder pluginu z kodem.
+4. Zaktualizowany plik kalkulatora.
+5. Instrukcję migracji z obecnej wersji.
+6. Instrukcję wdrożenia krok po kroku.
+7. Krótki rollback plan.
+8. Informację, które legacy elementy zostały:
+- przeniesione
+- zastąpione
+- usunięte
+- opakowane adapterem
+
+KRYTERIUM SUKCESU
+-----------------
+Po podmianie:
+- użytkownik ma działający nowy Zegger ERP
+- obecny Panel Ofertowy żyje w środku jako moduł
+- kalkulator uruchamia ERP przez nowy launcher
+- komunikator i relacje firma-firma działają zgodnie ze specyfikacją
+- źródła Google + katalog lokalny działają zgodnie ze specyfikacją
+- nie ma regresji najważniejszych funkcji ofertowych
+
+KONIEC PLIKU

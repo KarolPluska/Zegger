@@ -1,0 +1,285 @@
+ZEGGER ERP - PRODUKTY / ŹRÓDŁA DANYCH / OFERTY
+==============================================
+
+1. MODEL ŹRÓDEŁ DANYCH FIRMY
+----------------------------
+Każda firma może mieć równolegle:
+- jedno źródło Google Sheets
+- bibliotekę wewnętrzną produktów
+
+To nie są tryby wykluczające.
+To są dwa źródła tej samej firmy.
+
+Zasada:
+- firma może mieć tylko 1 aktywne źródło Google
+- ale może jednocześnie mieć dowolnie rozwijaną bibliotekę lokalną
+
+2. GOOGLE SHEETS
+----------------
+2.1. Rola Google Sheets
+- Google Sheets jest główną bazą zewnętrzną firmy
+- firma zmienia dane w arkuszu
+- ERP synchronizuje i cache’uje te dane
+
+2.2. Wymagania
+- konfiguracja źródła w module Biblioteka produktów i źródła danych
+- odczyt, walidacja, sync status
+- cache po stronie serwera / DB
+- przycisk ręcznej synchronizacji
+- historia / meta synchronizacji
+- nie mieszaj danych z arkusza bezpośrednio z ręcznymi produktami
+- traktuj arkusz jako osobne źródło
+
+2.3. Zasada firmy startowej
+Dla Zegger Tech użyj jako bootstrap obecnych ustawień starego pluginu:
+- sheet_pub_id
+- tabs/gids
+- logikę obecnych nazw zakładek
+- obecny model danych
+
+3. BIBLIOTEKA WEWNĘTRZNA
+------------------------
+3.1. Cel
+Firma może budować własną, lokalną bibliotekę produktów bez Google Sheets.
+
+3.2. Zakres biblioteki lokalnej
+Musi obsługiwać:
+- kategorie
+- podkategorie
+- produkty
+- warianty
+- kolory
+- SKU
+- ceny
+- jednostki
+- opisy / komentarze
+- status aktywny/ukryty
+- opcjonalnie logikę progów typu paleta/TIR, jeśli istnieje sens w module ofertowym
+
+3.3. Zasada
+Produkty lokalne:
+- nie są synchronizowane z Google
+- są własną warstwą danych firmy
+- mają działać identycznie logicznie jak pozycje z importu tam, gdzie to możliwe
+
+4. ŁĄCZNA PREZENTACJA DANYCH W OFERTACH
+---------------------------------------
+4.1. Firma tworzy ofertę dla własnego kontekstu
+Wtedy w pickerze produktów widzi:
+- produkty z Google
+- produkty z biblioteki lokalnej
+jako jedną listę
+
+Ale produkty powinny mieć czytelne oznaczenie źródła:
+- Google
+- Lokalna
+
+4.2. Firma tworzy ofertę w relacji z inną firmą
+Najpierw wybiera kontekst firmy/źródła.
+Jeżeli wybierze firmę B, to pracuje na danych firmy B:
+- jej Google
+- jej biblioteka lokalna
+
+Czyli:
+- dla własnej firmy: widzę scaloną listę własnych źródeł
+- dla relacji z inną firmą: widzę scaloną listę źródeł tej konkretnej firmy relacyjnej
+
+4.3. UI pickera
+Zrób najpierw wybór kontekstu firmy:
+- Moja firma
+- Firma powiązana A
+- Firma powiązana B
+itd.
+
+Po wyborze kontekstu:
+- pokazuj jedną wspólną listę produktów z tej firmy
+- z badge źródła (Google / Lokalna)
+
+5. TWARDA WALIDACJA RELACJI FIRMA-FIRMA
+---------------------------------------
+To jest jedna z najważniejszych zasad systemu.
+
+Jeżeli firma A tworzy ofertę na podstawie danych firmy B, to ta oferta należy do relacji:
+- A↔B
+
+Taka oferta:
+- może być wysłana tylko do firmy B
+- może być przypięta tylko do rozmowy A↔B
+- nie może być przypięta do relacji A↔C
+- nie może zostać wysłana do firmy C
+
+Przykład:
+- A, B i C są ze sobą połączone
+- A tworzy ofertę na bazie danych B
+- ta oferta jest tylko dla relacji A↔B
+- nie wolno jej przepiąć/wysłać do relacji A↔C
+
+Wdroż twardą walidację relacji w backendzie.
+Frontend nie może mieć możliwości obejścia tej reguły.
+
+6. MODEL SKU I KOLORÓW
+----------------------
+6.1. Źródło Google - reguła interpretacji kolumn
+Obowiązuje reguła dynamicznej interpretacji kolumn SKU:
+
+- jeśli kolumna nazywa się:
+  - "Nr towaru"
+  to oznacza wariant koloru:
+  - Brak
+
+- jeśli kolumna nazywa się:
+  - "Nr towaru RAL 6000"
+  to oznacza wariant koloru:
+  - RAL 6000
+
+- jeśli kolumna nazywa się:
+  - "Nr towaru RAL 7016"
+  to oznacza wariant koloru:
+  - RAL 7016
+
+Czyli:
+- każda kolumna zaczynająca się od "Nr towaru" jest osobnym wariantem kolorystycznym
+- tekst po "Nr towaru" staje się nazwą koloru
+- pusty suffix = kolor "Brak"
+- każdy wariant koloru ma własne SKU
+
+6.2. Dynamiczne rozszerzanie
+Jeżeli w arkuszu pojawi się nowa kolumna zgodna z tym wzorcem, system ma ją automatycznie rozpoznać jako nowy wariant koloru.
+
+6.3. Biblioteka lokalna
+Ta sama logika ma działać również dla biblioteki wewnętrznej.
+Nie rób dwóch różnych modeli kolorów/SKU.
+
+7. OFERTY - MODUŁ OFERTOWY W ERP
+--------------------------------
+7.1. Główna zasada
+Zachowaj istniejący Panel Ofertowy jako moduł ERP.
+
+7.2. Zakres zachowania
+- lista pozycji
+- klienci
+- historia ofert
+- podgląd
+- PDF
+- notatki
+- statusy
+- blokady
+- duplikacja
+- obecne ważne mechaniki
+
+7.3. Rozszerzenia
+- integracja z komunikatorem
+- integracja z firmami
+- integracja z relacjami firma-firma
+- integracja z nowym katalogiem danych
+
+8. STATUSY OFERT
+----------------
+Docelowy zestaw statusów użytkowych:
+- Nowa
+- W trakcie
+- Wysłane
+- Przyjęte
+- W realizacji
+- Zrealizowana
+- Odrzucona
+- Anulowana
+
+Dopuszczalne jest utrzymanie warstwy mapującej stare status keys z legacy pluginu do nowego modelu, jeśli to pomoże w migracji.
+
+Rekomendowany model techniczny:
+- new
+- in_progress
+- sent
+- accepted
+- in_realization
+- completed
+- rejected
+- canceled
+
+Zrób czytelne mapowanie legacy -> new model.
+
+9. EDYCJA OFERTY PO WYSŁANIU
+----------------------------
+To jest dozwolone.
+
+Jeżeli oferta została już powiązana z rozmową:
+- każda jej edycja musi wygenerować wpis systemowy w rozmowie
+- wpis ma zawierać zwięzły, ale dokładny changelog
+
+Changelog powinien wykrywać i pokazywać np.:
+- dodano pozycję
+- usunięto pozycję
+- zmieniono ilość
+- zmieniono cenę
+- zmieniono rabat
+- zmieniono komentarz
+- zmieniono status
+- zmieniono sumę
+- zmieniono klienta
+- zmieniono parametry dodatkowe
+
+10. POWIĄZANIE OFERTA <-> ROZMOWA
+---------------------------------
+Zasada twarda:
+- 1 oferta może być powiązana maksymalnie z 1 rozmową
+- 1 rozmowa może mieć maksymalnie 1 ofertę
+
+Scenariusze:
+A. Wysyłasz nową ofertę:
+- tworzysz nową rozmowę ofertową automatycznie
+
+B. Masz istniejącą rozmowę ogólną:
+- możesz przypiąć do niej ofertę
+- ale tylko jeśli:
+  - rozmowa jest aktywna
+  - oferta nie jest jeszcze nigdzie przypięta
+  - oferta należy do tej samej relacji firma-firma
+  - akcję wykonuje prowadzący rozmowę
+
+Po przypięciu:
+- rozmowa pozostaje tą samą rozmową
+- staje się rozmową z powiązaniem ofertowym
+- nie wolno przypiąć do niej kolejnej oferty
+
+11. INFORMACJE O POWIĄZANEJ ROZMOWIE W OFERCIE
+----------------------------------------------
+W module ofertowym:
+- przy ofercie ma być informacja, czy jest powiązana z rozmową
+- ma być szybkie przejście do tej rozmowy
+
+12. KARTA OFERTY W ROZMOWIE
+---------------------------
+W rozmowie powiązanej z ofertą musi istnieć przypięta karta oferty na górze wątku.
+
+Akcje w karcie:
+- Podgląd
+- PDF
+- Otwórz w module ofert
+- Zmień status
+- Przejdź do powiązanej firmy
+
+13. BLOKADA DUPLIKOWANIA CHATÓW DLA TEJ SAMEJ OFERTY
+----------------------------------------------------
+Jeżeli oferta ma już własny wątek lub jest przypięta do rozmowy:
+- nie wolno utworzyć drugiego chatu dla tej samej oferty
+
+14. DANE KLIENTÓW
+-----------------
+Zachowaj obecny zakres klientów z modułu ofertowego.
+Klienci pozostają ważni dla ofert i historii.
+Zadbaj o kompatybilność danych z legacy.
+
+15. PDF
+-------
+PDF i jego obecna funkcjonalność są krytyczne do zachowania.
+Możesz poprawić architekturę generacji / integracji, ale nie wolno utracić obecnych możliwości.
+
+16. PRODUKTOWE ILOŚCI / POZIOMY CEN
+-----------------------------------
+Jeżeli stare dane obsługują formaty typu:
+- paleta
+- TIR
+- różne ceny jednostkowe
+to nowy model katalogu ma być gotowy do ich przejęcia lub odwzorowania.
+Nie projektuj katalogu zbyt płasko.

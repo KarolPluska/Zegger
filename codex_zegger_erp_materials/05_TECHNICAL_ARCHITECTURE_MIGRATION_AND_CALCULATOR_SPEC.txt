@@ -1,0 +1,275 @@
+ZEGGER ERP - ARCHITEKTURA TECHNICZNA / MIGRACJA / KALKULATOR
+============================================================
+
+1. STRATEGIA WDROŻENIA
+----------------------
+Powstaje nowy plugin:
+- Zegger ERP
+
+Nie utrzymuj starej architektury jako głównej.
+Wykorzystaj ją jako źródło funkcji i danych.
+
+Nowy plugin ma być jedną nową wersją całości.
+Nie rozbijaj tego na wiele niezależnych pluginów.
+
+2. NOWA ARCHITEKTURA
+--------------------
+Nowy plugin ma mieć warstwy:
+- bootstrap / main plugin file
+- DB / migracje
+- auth
+- firmy / użytkownicy / permissions
+- relacje firma-firma
+- źródła Google
+- katalog lokalny
+- oferty
+- komunikator
+- powiadomienia
+- admin WP
+- ERP app renderer / shell
+- legacy compatibility (tylko jeśli potrzebne)
+
+3. REKOMENDOWANA STRUKTURA KODU
+-------------------------------
+Przykład:
+zegger-erp/
+- zegger-erp.php
+- includes/
+  - class-zerp-db.php
+  - class-zerp-auth.php
+  - class-zerp-admin.php
+  - class-zerp-rest.php
+  - class-zerp-app.php
+  - class-zerp-companies.php
+  - class-zerp-members.php
+  - class-zerp-permissions.php
+  - class-zerp-relations.php
+  - class-zerp-sources-google.php
+  - class-zerp-catalog.php
+  - class-zerp-offers.php
+  - class-zerp-offer-pdf.php
+  - class-zerp-chat.php
+  - class-zerp-notifications.php
+  - class-zerp-migration.php
+  - class-zerp-maintenance.php
+- assets/
+  - css/
+  - js/
+  - icons/
+
+Możesz użyć innego podziału, ale zachowaj klarowny porządek.
+
+4. NOWA APLIKACJA ERP
+---------------------
+4.1. Entry point
+Zrób pełną aplikację ERP jako osobną aplikację webową renderowaną przez plugin.
+Nie jako mini-popup w środku starego panelu.
+
+Rekomendowany routing:
+- /?zegger_erp=1
+- ewentualnie z query vars dla:
+  - view
+  - embed
+  - module
+
+4.2. Shell
+- topbar
+- content area
+- routing / module state
+- brak iframe wewnątrz samego ERP shell-a
+- Panel Ofertowy działa jako moduł wewnątrz shell-a, nie przez drugi wewnętrzny iframe
+
+4.3. Unsaved changes guard
+Na poziomie shell-a i modułu ofertowego dodaj blokadę przełączenia modułu przy niezapisanych zmianach.
+
+5. KALKULATOR - CO ZMIENIĆ
+--------------------------
+5.1. Obecny stan
+W kalkulatorze istnieje:
+- login overlay
+- host iframe panelu
+- bridge do Panelu Ofertowego
+
+To trzeba uprościć.
+
+5.2. Docelowy stan
+Kalkulator ma mieć tylko lekki launcher do Zegger ERP.
+Nie powinien już trzymać pełnej logiki starego modala logowania/panelu.
+
+5.3. Zalecenie implementacyjne
+Zrób uniwersalny launcher:
+- konfigurowalny przycisk
+- może działać w kalkulatorze i poza kalkulatorem
+- otwiera wejście do Zegger ERP
+
+Preferowany model:
+- kalkulator zawiera tylko mały przycisk/launcher
+- nowa aplikacja ERP otwiera się osobno jako pełna aplikacja
+- możesz użyć lekkiego hosta/overlay launchera tylko jako wejścia, ale nie trzymaj już starej, rozbudowanej logiki logowania i panelu w kalkulatorze
+
+5.4. Wymaganie od użytkownika
+Finalnie użytkownik chce tylko:
+- skopiować nowy kod kalkulatora
+- podmienić plugin
+- uruchomić nowy system
+
+6. MIGRACJA ZE STAREGO PLUGINU
+------------------------------
+6.1. Analiza legacy
+Legacy plugin ma obecnie:
+- konta
+- tokeny
+- klientów
+- oferty
+- zdarzenia
+- cache sheets
+- panel ofertowy
+- REST
+- auth
+- PDF eksport
+
+6.2. Dane krytyczne do zachowania
+Priorytet migracji:
+- oferty
+- historia ofert / eventy
+- klienci
+- archiwum PDF
+- logika panelu ofertowego
+- ustawienia Google Sheets / tabs / gids
+- Zegger Tech jako firma startowa
+
+6.3. Konta legacy
+Migracja kont nie jest krytyczna, jeśli znacząco utrudnia nową architekturę.
+Dozwolone:
+- wystartować od nowego modelu firm i użytkowników
+- utworzyć Zegger Tech jako pierwszą firmę
+- ownera bootstrapowego
+- resztę kont zbudować od nowa
+
+Jeśli da się bezpiecznie migrować konta, zrób to.
+Ale nie poświęcaj przez to jakości całości.
+
+7. REKOMENDOWANY NOWY MODEL TABEL
+---------------------------------
+7.1. Firmy i użytkownicy
+- wp_zerp_companies
+- wp_zerp_company_members
+- wp_zerp_company_member_permissions
+- wp_zerp_auth_tokens
+- wp_zerp_join_requests
+
+7.2. Relacje
+- wp_zerp_company_relations
+- wp_zerp_relation_events
+
+7.3. Źródła i katalog
+- wp_zerp_google_sources
+- wp_zerp_google_cache
+- wp_zerp_catalog_categories
+- wp_zerp_catalog_items
+- wp_zerp_catalog_variants
+- wp_zerp_catalog_prices (jeśli rozbijesz model cen)
+- wp_zerp_catalog_events
+
+7.4. Oferty
+- wp_zerp_offers
+- wp_zerp_offer_events
+- wp_zerp_offer_clients_map (opcjonalnie)
+- wp_zerp_offer_chat_link
+- wp_zerp_offer_pdf_archive
+
+7.5. Komunikator
+- wp_zerp_threads
+- wp_zerp_thread_participants
+- wp_zerp_thread_messages
+- wp_zerp_thread_attachments
+- wp_zerp_thread_pings
+- wp_zerp_thread_events
+
+7.6. Powiadomienia
+- wp_zerp_notifications
+- wp_zerp_notification_reads
+
+Możesz zoptymalizować schemat, ale zachowaj te domeny danych.
+
+8. ADMIN WP
+-----------
+W backendzie WP zrób czytelne panele:
+- Przegląd firm
+- Użytkownicy firmowi
+- Relacje firma-firma
+- Kategorie rozmów
+- Statusy / maintenance
+- Diagnostyka sync i storage
+
+9. LEGACY COMPATIBILITY
+-----------------------
+9.1. REST
+Nowy kod ma działać na nowym namespace:
+- zegger-erp/v1
+
+Jeśli część legacy potrzebuje zgodności:
+- zostaw cienką warstwę adaptera
+- ale nie trzymaj nowej logiki na starym namespace jako głównym API
+
+9.2. Statusy
+Jeżeli stare oferty mają stare keys/status values:
+- zmapuj je przy migracji / odczycie
+
+9.3. PDF
+Jeśli stare ścieżki PDF istnieją:
+- zachowaj je lub poprawnie zmigruj ich referencje
+
+10. WIZUALNE ZACHOWANIE PANELU OFERTOWEGO
+-----------------------------------------
+Panel Ofertowy wewnątrz ERP ma nadal wyglądać jak "ten sam panel ofertowy", a nie obcy, nowy produkt.
+Kod może być przebudowany.
+Wygląd i flow użytkowe mają pozostać rozpoznawalne i jakościowe.
+
+11. MIGRACJA ZEGGER TECH
+------------------------
+Utwórz firmę startową:
+- Zegger Tech
+
+Jako źródło danych bootstrapowych użyj:
+- starych settings starego pluginu
+- obecnych tabs/gids
+- danych z obecnego panelu ofertowego
+
+12. KRYTYCZNE TECH RULES
+------------------------
+1. Idempotentne migracje DB.
+2. Brak utraty danych przy upgrade.
+3. Rozsądne soft-fail tam, gdzie migracja kont nie jest możliwa.
+4. Twarde walidacje po stronie backendu.
+5. Zero polegania wyłącznie na frontendzie.
+6. Zachowaj bezpieczeństwo:
+   - nonce / capability checks, jeśli dotyczy
+   - sanityzacja
+   - walidacja
+   - brak wycieków szczegółów błędów
+7. Nie twórz monolitycznego jednego pliku JS/PHP bez struktury.
+
+13. DEPLOYMENT
+--------------
+Dostarcz:
+- nowy plugin gotowy do instalacji
+- instrukcję migracji
+- instrukcję podmiany kalkulatora
+- ewentualny skrypt/importer, jeśli potrzebny
+- rollback plan
+
+14. ROLLBACK
+------------
+Rollback musi opisać:
+- jak wyłączyć nowy plugin
+- jak wrócić do starego pluginu
+- co z bazą danych
+- jak nie utracić danych zapisanych już w nowej wersji
+- jakie ryzyka są przy rollbacku po uruchomieniu produkcyjnym
+
+15. PWA
+-------
+Na v1:
+- przygotuj strukturę techniczną pod przyszłe PWA
+- nie rób pełnego rollout PWA jako warunku ukończenia tej wersji

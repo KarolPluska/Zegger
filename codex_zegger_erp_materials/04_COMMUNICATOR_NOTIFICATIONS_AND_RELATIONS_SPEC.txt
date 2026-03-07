@@ -1,0 +1,291 @@
+ZEGGER ERP - KOMUNIKATOR / POWIADOMIENIA / RELACJE FIRMA-FIRMA
+===============================================================
+
+1. ROLA KOMUNIKATORA
+--------------------
+Komunikator nie jest zwykłym chatem.
+To globalny moduł operacyjny Zegger ERP do:
+- rozmów firma-firma
+- rozmów ogólnych
+- rozmów ofertowych
+- przypinania ofert
+- wysyłania załączników
+- śledzenia historii zmian ofert
+- pingowania konkretnych osób
+- pracy na statusach
+- obsługi powiadomień relacyjnych
+
+2. DOSTĘP DO KOMUNIKATORA
+-------------------------
+- osobny aktywny moduł na dashboardzie
+- skrót/ikona w topbarze
+- centrum powiadomień w topbarze osobno przez dzwonek
+
+3. UKŁAD MODUŁU
+---------------
+Rekomendowany layout:
+- lewa kolumna:
+  - lista rozmów
+  - filtry
+  - sortowanie
+  - szybkie przełączanie kategorii
+- prawa kolumna:
+  - treść aktywnej rozmowy
+  - karta oferty (jeśli istnieje)
+  - strumień wiadomości
+  - załączniki
+  - formularz wysyłki
+
+4. TYPY ROZMÓW
+--------------
+4.1. Rozmowa ogólna
+- bez oferty
+- do pytań, ustaleń, tematów technicznych, handlowych, reklamacyjnych
+
+4.2. Rozmowa ofertowa
+- dedykowana konkretnej ofercie
+- powstaje automatycznie przy wysłaniu nowej oferty
+- albo przez przypięcie oferty do istniejącej rozmowy ogólnej
+
+5. RELACJE FIRMA-FIRMA
+----------------------
+Komunikator działa w kontekście relacji dwóch firm.
+
+Każda rozmowa należy do dokładnie jednej relacji:
+- A↔B
+- A↔C
+- itd.
+
+Nie wolno mieszać relacji.
+Rozmowa A↔B nie może nosić ofert ani zdarzeń z relacji A↔C.
+
+6. NOWA ROZMOWA
+---------------
+Przy rozpoczynaniu nowej rozmowy użytkownik:
+1. wybiera firmę docelową
+2. wybiera kategorię rozmowy
+3. opcjonalnie dodaje ping do konkretnych osób
+4. wysyła pierwszą wiadomość lub tworzy rozmowę wraz z ofertą
+
+7. WYSZUKIWANIE FIRMY
+---------------------
+Wyszukiwanie dynamiczne:
+- po nazwie
+- po kluczu
+- kontekstowo
+
+W wynikach pokaż:
+- nazwa firmy
+- NIP
+- adres / miasto
+- telefon
+- administrator
+
+8. KATEGORIE ROZMÓW
+-------------------
+Default:
+- Ogólne
+- Zapytanie ofertowe
+- Zamówienie
+- Reklamacja
+- Techniczne
+- Rozliczenia
+- Inne
+
+W backendzie pluginu ma być możliwość dodania nowych kategorii.
+
+9. PINGI DO KONKRETNYCH OSÓB
+----------------------------
+9.1. Zakres
+Można pingować:
+- osoby z własnej firmy
+- osoby z firmy docelowej
+
+9.2. Wybór
+- wybór po nazwie konta
+- można wskazać kilka osób jednocześnie
+
+9.3. Charakter pingów
+- ping jest opcjonalny
+- ping jest jednorazowym zdarzeniem
+- ping nie rezerwuje rozmowy
+- ping nie blokuje innym użytkownikom wejścia do rozmowy
+- ping jest tylko sygnałem: "z tą osobą/osobami chciałbym rozmawiać"
+
+9.4. Gdy wskazana osoba nie odpowie
+- inni użytkownicy firmy nadal widzą rozmowę
+- ktoś inny może ją przejąć
+
+10. PROWADZĄCY / UCZESTNICY
+---------------------------
+Prowadzącym zostaje:
+- pierwsza osoba, która realnie odpowie w rozmowie
+
+Nie osoba zapingowana, tylko osoba, która faktycznie weszła w obsługę.
+
+Reguły:
+- rozmowę widzą wszyscy użytkownicy obu firm
+- aktywni uczestnicy to ci, którzy do niej piszą / obsługują ją
+- jeśli ktoś napisze do rozmowy, staje się uczestnikiem tej rozmowy
+- prowadzący mają uprawnienia operacyjne w wątku, np. statusy oferty
+
+11. POWIĄZANIE OFERTY Z ROZMOWĄ
+-------------------------------
+11.1. Nowa oferta
+- nowe wysłanie oferty tworzy nowy wątek ofertowy
+
+11.2. Istniejąca rozmowa ogólna
+- prowadzący może przypiąć do niej ofertę
+- tylko jeśli oferta:
+  - nie jest nigdzie przypięta
+  - należy do tej samej relacji firma-firma
+  - rozmowa jest aktywna
+
+11.3. Po przypięciu
+- rozmowa pozostaje tym samym wątkiem
+- otrzymuje powiązanie ofertowe
+- karta oferty ma być przypięta na górze wątku
+- nie wolno przypiąć drugiej oferty do tej rozmowy
+
+12. TWARDA WALIDACJA RELACJI A↔B
+--------------------------------
+Jeżeli rozmowa jest A↔B, można do niej przypiąć tylko ofertę z relacji A↔B.
+Nie wolno przypinać oferty z relacji A↔C.
+
+13. EDYCJA OFERTY W POWIĄZANEJ ROZMOWIE
+---------------------------------------
+Jeśli oferta powiązana z rozmową jest edytowana:
+- w rozmowie musi pojawić się wiadomość systemowa
+- z dokładnym changelogiem w zwięzłej formie
+
+Druga strona widzi:
+- pełną historię zmian oferty
+- nie tylko ostatni stan
+
+14. KARTA OFERTY W WĄTKU
+------------------------
+Karta oferty ma być przypięta u góry rozmowy (jak pinezka).
+
+Akcje w karcie:
+- Podgląd
+- PDF
+- Otwórz w module ofert
+- Zmień status
+- Przejdź do powiązanej firmy
+
+15. TYPY ZDARZEŃ SYSTEMOWYCH W ROZMOWIE
+---------------------------------------
+Osobne typy zdarzeń:
+- utworzono rozmowę
+- zapingowano użytkownika/użytkowników
+- przypięto ofertę
+- oferta została zmieniona
+- status oferty został zmieniony
+- rozmowa została zamknięta
+- rozmowa została wznowiona
+- dodano załącznik
+- plik wygasł
+
+16. ZAŁĄCZNIKI
+--------------
+Dozwolone:
+- PDF
+- JPG
+- PNG
+
+Limity:
+- max 5 plików w jednej wiadomości
+- max 10 MB łącznie
+
+UI:
+- 2 wskaźniki przy polu wiadomości:
+  - liczba plików
+  - wykorzystanie limitu MB
+- dla JPG/PNG pokazuj miniatury, jeśli to sensowne
+- osobny widok / przycisk "Załączniki" w wątku
+
+Retencja:
+- 12 miesięcy
+- przy pliku pokaż datę ważności
+- tooltip z informacją o retencji
+- po wygaśnięciu zostaw wpis "Plik wygasł"
+
+17. ZAMYKANIE I WZNAWIANIE ROZMÓW
+---------------------------------
+17.1. Zamknięcie
+- rozmowę można zamknąć
+- po zamknięciu staje się tylko do odczytu
+- trafia do filtra "zamknięte"
+
+17.2. Wznowienie
+- wznowić może każdy, kto widzi rozmowę
+- jeśli wcześniej nie był uczestnikiem i wznowi rozmowę:
+  - staje się uczestnikiem
+- przy wznowieniu można wskazać powód
+
+Rekomendowane powody:
+- reklamacja
+- niezgodność
+- dodatkowe pytanie
+- problem techniczny
+- inny własny opis
+
+17.3. Twarda zasada
+- nie można przypinać nowej oferty do zamkniętej rozmowy
+
+18. FILTRY I SORTOWANIE
+-----------------------
+Muszą istnieć filtry/sortowanie po:
+- dacie
+- ostatniej wiadomości
+- nieprzeczytanych
+- zamkniętych
+- kategorii
+- typie rozmowy
+- firmie
+- statusie powiązanej oferty
+
+19. POWIADOMIENIA
+-----------------
+Centrum powiadomień przez dzwonek ma zbierać:
+- nowe wiadomości
+- pingi do Ciebie
+- przypięcie oferty
+- zmiany oferty
+- zmiany statusu oferty
+- prośby dołączenia
+- zaproszenia firma-firma
+- inne zdarzenia systemowe
+
+Sekcje:
+- Wiadomości
+- Oferty
+- Prośby
+- Zaproszenia
+- System
+
+20. RELACJE FIRMA-FIRMA I RABATY
+--------------------------------
+Połączenia między firmami działają jako:
+- invite / accept
+
+Przy akceptacji relacji obie strony definiują maksymalny rabat w swoim kierunku.
+To są limity kierunkowe, nie wspólna jedna liczba.
+
+Czyli:
+- A określa, jaki max rabat może stosować B na danych A
+- B określa, jaki max rabat może stosować A na danych B
+
+21. KTO MOŻE PRZYPIĄĆ OFERTĘ DO ROZMOWY
+---------------------------------------
+- tylko prowadzący rozmowę
+
+22. KTO MOŻE ZMIENIAĆ STATUS OFERTY W ROZMOWIE
+----------------------------------------------
+- tylko prowadzący rozmowę / uprawnione osoby zgodnie z macierzą uprawnień
+
+23. KRYTYCZNA REGUŁA PORZĄDKUJĄCA
+--------------------------------
+Oferta i rozmowa zawsze należą do konkretnej relacji dwóch firm.
+Nie wolno mieszać relacji.
+To ma być walidowane twardo po stronie backendu.

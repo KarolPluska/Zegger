@@ -1,0 +1,836 @@
+ZEGGER ERP - ACCEPTANCE TEST MATRIX
+FINAL QA / UAT / REGRESSION / MIGRATION / SECURITY / UX / MOBILE CHECKLIST
+
+PURPOSE
+This file defines the acceptance test matrix for the full Zegger ERP implementation.
+It is intended for Codex as a non-optional completion target.
+The implementation is NOT accepted until the items below are satisfied or explicitly documented as not applicable with a technical reason.
+
+CORE RULES
+1. No regression in the legacy Offer Panel user experience, business flow, PDF generation, customer handling, and offer history.
+2. New ERP shell, modules, permissions, communicator, company model, relations, sources, notifications, and calculator integration must work as a coherent system.
+3. Any deviation from the matrix must be documented in delivery notes.
+4. For every failed test there must be: root cause, fix, and re-test result.
+5. All tests must be validated on desktop and mobile where applicable.
+6. Browser minimum manual coverage: Chrome, Edge, Safari.
+7. Device coverage minimum: desktop, tablet, mobile.
+8. OS coverage minimum: Windows and macOS for desktop behavior.
+9. For all destructive actions there must be a confirmation flow or an intentional documented UX choice.
+10. For all permission boundaries there must be backend validation, not only frontend hiding.
+
+TEST EXECUTION FORMAT
+For each test case, Codex should be able to state:
+- STATUS: PASS / FAIL / BLOCKED / N-A
+- BUILD/VERSION TESTED
+- PRECONDITIONS
+- STEPS EXECUTED
+- EXPECTED RESULT
+- ACTUAL RESULT
+- NOTES / SCREEN / LOG REFERENCE
+
+====================================================================
+SECTION A - DELIVERY PACKAGE ACCEPTANCE
+====================================================================
+
+A-001 DELIVERY COMPLETENESS
+Expected:
+- New Zegger ERP plugin code exists.
+- Installable ZIP exists.
+- Updated calculator file exists.
+- Migration/update instructions exist.
+- Rollback instructions exist.
+- Any DB migration logic exists and is documented.
+- Any assets required by ERP shell are included.
+
+A-002 CLEAN INSTALL TEST
+Steps:
+- Install plugin on clean WP instance.
+- Activate plugin.
+Expected:
+- No fatal errors.
+- Required tables/options are created.
+- Admin UI is reachable.
+- REST routes register correctly.
+
+A-003 UPDATE INSTALL TEST
+Steps:
+- Start with legacy plugin state.
+- Upgrade to new Zegger ERP package using documented process.
+Expected:
+- Upgrade completes without fatal errors.
+- Legacy offer data stays available.
+- Legacy PDFs/history/customers remain readable.
+- Admin can access ERP shell and migrated settings.
+
+A-004 ROLLBACK READINESS
+Expected:
+- Delivery contains rollback steps.
+- Rollback does not require guessing.
+- Rollback covers plugin code, DB schema risk, and calculator replacement.
+
+====================================================================
+SECTION B - ERP SHELL / APP FRAME ACCEPTANCE
+====================================================================
+
+B-001 POST-LOGIN ROUTING
+Steps:
+- Login with valid account.
+Expected:
+- User lands on ERP modules dashboard, not directly inside legacy offer module.
+
+B-002 SHARED APP SHELL
+Expected:
+- ERP has persistent shell layout with topbar and module switching.
+- User can move between modules without leaving application.
+
+B-003 UNSAVED CHANGES PROTECTION
+Steps:
+- Open Offer Panel.
+- Modify offer without saving.
+- Attempt module switch.
+Expected:
+- Confirmation modal appears: Save / Discard / Cancel or equivalent.
+- Data loss is prevented.
+
+B-004 MODULE VISIBILITY BY PERMISSION
+Expected:
+- User sees only modules allowed by owner/admin permissions.
+- Hidden modules are not accessible by direct URL/route/API bypass.
+
+B-005 INACTIVE MODULE TILES
+Expected:
+- Planned future modules may appear as disabled/production state if intentionally configured.
+- Disabled modules have clear status and cannot be entered.
+
+B-006 TOPBAR GLOBAL BEHAVIOR
+Expected:
+- Topbar exists in ERP shell.
+- Topbar includes communicator entry and notifications center.
+- Topbar remains functional across modules.
+
+B-007 MOBILE FULLSCREEN APP
+Expected:
+- ERP opens as fullscreen application on mobile.
+- No broken modal layering from legacy overlay approach.
+- No horizontal overflow.
+
+B-008 ACCESSIBILITY BASICS
+Expected:
+- Keyboard focus order is sane.
+- No aria-hidden on focused containers.
+- No focus trap breakage when opening/closing panels.
+- Dialogs are escapable if design allows.
+
+====================================================================
+SECTION C - AUTH / REGISTRATION / COMPANY CREATION / JOIN FLOW
+====================================================================
+
+C-001 LOGIN SUCCESS
+Expected:
+- Valid credentials log in successfully.
+- Proper session/token is created.
+- User is routed to ERP dashboard.
+
+C-002 LOGIN FAILURE
+Expected:
+- Invalid credentials show safe error.
+- No sensitive detail leakage.
+- No PHP warnings/fatals.
+
+C-003 SUSPENDED ACCOUNT LOGIN BLOCK
+Expected:
+- Suspended account cannot log in directly.
+- Clear suspended account message appears.
+- Only owner/allowed impersonation path can access such account.
+
+C-004 REGISTRATION ENTRY FROM LOGIN
+Expected:
+- Login area exposes registration action.
+- Registration launches guided multi-step flow.
+
+C-005 REGISTRATION PATH SELECTION
+Expected:
+- User can choose:
+  - create company + owner account
+  - create user account and request join to existing company
+- Guidance text explains the difference.
+
+C-006 COMPANY REGISTRATION WIZARD
+Expected:
+- Wizard is step-based, intuitive, and guided.
+- Required fields validated.
+- Helpful hints present.
+
+C-007 UNIQUE COMPANY BY NIP
+Steps:
+- Attempt create company with duplicate NIP.
+Expected:
+- Blocked by backend.
+- Clear message shown.
+- No duplicate tenant/company created.
+
+C-008 OWNER ACCOUNT AFTER COMPANY CREATION
+Expected:
+- New company is created.
+- Owner account is created.
+- Company can exist even without Google Sheets connected.
+- User is guided to next appropriate setup/dashboard step.
+
+C-009 JOIN EXISTING COMPANY FLOW
+Expected:
+- User can search/identify target company by name and/or key as specified.
+- Join request is created for one company only.
+- Account remains pending until accepted.
+
+C-010 LIVE COMPANY KEY / COMPANY SEARCH VALIDATION
+Expected:
+- Search/validation is responsive and safe.
+- Result shows identifying public company data only.
+
+C-011 PENDING ACCOUNT STATE
+Expected:
+- Pending user without company sees limited account state.
+- TTL countdown is visible.
+- No unauthorized modules available.
+
+C-012 JOIN REQUEST ACCEPT
+Expected:
+- Approved user becomes company member.
+- Modules/permissions appear according to role.
+- Notifications are generated.
+
+C-013 JOIN REQUEST REJECT
+Expected:
+- User receives rejection notification.
+- Account remains outside company.
+- User can retry according to rules.
+
+C-014 TTL EXPIRATION FOR ORPHAN ACCOUNT
+Expected:
+- Account without company expires according to registration-based TTL.
+- Hard delete or documented deletion behavior works.
+
+====================================================================
+SECTION D - COMPANY / USERS / ROLES / IMPERSONATION
+====================================================================
+
+D-001 OWNER SEES ALL COMPANY MODULES
+Expected:
+- Owner has full visibility/control in company scope.
+- Owner cannot accidentally remove critical self-access.
+
+D-002 FULL USER MANAGEMENT MODULE
+Expected:
+- Company & Users module is active and fully functional.
+- Owner/admin can view company data and user roster.
+
+D-003 CREATE USER ACCOUNT INSIDE COMPANY
+Expected:
+- Owner/admin/authorized manager can create user accounts.
+- Role and module permissions can be assigned.
+
+D-004 PER-MODULE VISIBILITY PER USER
+Expected:
+- Owner can decide which modules each user sees.
+- Dashboard tiles respect those permissions.
+
+D-005 MANAGER PERMISSION BOUNDARY
+Expected:
+- Manager sees actions only if owner granted them.
+- Backend enforces permission checks.
+
+D-006 EDIT COMPANY DATA
+Expected:
+- Company data is not freely editable inline by default.
+- Edit mode requires explicit action.
+
+D-007 SUSPEND USER ACCOUNT
+Expected:
+- Authorized person can suspend account.
+- Suspended badge/state is visible where required.
+- Suspended account loses direct login access immediately.
+
+D-008 REACTIVATE USER ACCOUNT
+Expected:
+- Suspended account can be reactivated by authorized person.
+- Access returns correctly.
+
+D-009 IMPERSONATION UX
+Expected:
+- If impersonating another account, there is a strong visible banner/state.
+- Easy “return to own account” action exists.
+
+D-010 IMPERSONATION PERMISSION ENFORCEMENT
+Expected:
+- Only owner or users with explicit impersonation privilege can impersonate.
+- No unauthorized account switching possible.
+
+D-011 OWNER SAFETY RULES
+Expected:
+- Owner cannot suspend self.
+- Owner cannot remove own module visibility.
+- Owner cannot remove own impersonation capability if this rule is specified.
+
+====================================================================
+SECTION E - PRODUCT SOURCES / GOOGLE SHEETS / LOCAL LIBRARY
+====================================================================
+
+E-001 PRODUCT SOURCES MODULE ACTIVE
+Expected:
+- Product Sources / Library module is fully active.
+- UI supports Google source and internal library.
+
+E-002 SINGLE GOOGLE SOURCE RULE
+Expected:
+- Company can connect exactly one Google source.
+- Attempt to add second Google source is blocked or converted to edit flow.
+
+E-003 GOOGLE SOURCE CONFIGURATION
+Expected:
+- Owner/admin/authorized manager can configure source.
+- Validation of configuration works.
+
+E-004 GOOGLE SOURCE CACHE / SYNC
+Expected:
+- Data from Google is cached/snapshotted.
+- UI uses current synchronized data.
+- Sync status and last update information are visible if designed.
+
+E-005 GOOGLE DATA AS MAIN EXTERNAL SOURCE
+Expected:
+- Google data is treated as main external source.
+- Changes in Google source propagate after sync/update logic.
+
+E-006 LOCAL LIBRARY EXISTS IN PARALLEL
+Expected:
+- Company can maintain local products in addition to Google source.
+- Local products are not overwritten by Google sync.
+
+E-007 LOCAL PRODUCT CRUD
+Expected:
+- Add/edit/disable/delete or archive local product works according to design.
+- Categories/subcategories/variants/SKU/pricing supported.
+
+E-008 PRODUCT LIST MERGE IN OFFER PANEL
+Expected:
+- For own company context, Google products + local products are visible together as one list.
+- Source context remains logically valid.
+
+E-009 RELATION-CONTEXT SOURCE SWITCHING
+Expected:
+- In offer creation user can choose which company source context is used.
+- If creating for relation A↔B, data shown belongs to allowed relation source.
+
+E-010 SOURCE PERMISSION ENFORCEMENT
+Expected:
+- User cannot access product source of company without valid relation/permission.
+
+E-011 COLOR/SKU PARSING - GOOGLE SOURCE
+Expected:
+- Columns like “Nr towaru”, “Nr towaru RAL 6000”, “Nr towaru RAL 7016” are parsed as separate color variants.
+- Missing suffix maps to color variant “Brak” or designed equivalent.
+- Each color variant gets its own SKU.
+
+E-012 COLOR/SKU MODEL - LOCAL LIBRARY
+Expected:
+- Local library supports equivalent variant model.
+- UI allows creation/editing of color-specific SKU mappings.
+
+E-013 INTERNAL LIBRARY EXTENSIBILITY
+Expected:
+- Local library can support categories, subcategories, sizes, SKU, prices, descriptions, active state, and any required fields.
+
+====================================================================
+SECTION F - OFFER PANEL LEGACY PRESERVATION / MODULE EMBEDDED IN ERP
+====================================================================
+
+F-001 OFFER PANEL EXISTS AS ERP MODULE
+Expected:
+- Offer Panel is accessible as module tile from ERP dashboard.
+
+F-002 OFFER PANEL NO REGRESSION VISUALLY
+Expected:
+- Existing familiar UX/UI remains effectively preserved.
+- Any UI changes are only those needed for ERP integration or communicator integration.
+
+F-003 OFFER CREATION FLOW PRESERVED
+Expected:
+- Existing logic for creating offers still works.
+- No missing controls/regressions in key offer workflow.
+
+F-004 OFFER HISTORY PRESERVED
+Expected:
+- Existing history data remains available or properly migrated.
+- Sorting/filtering/status behavior remains working.
+
+F-005 CUSTOMER HANDLING PRESERVED
+Expected:
+- Existing customer workflows remain functional.
+
+F-006 PDF GENERATION PRESERVED
+Expected:
+- Existing PDF generation remains working.
+- No regression in output quality.
+- ERP integration does not break PDF assets or output logic.
+
+F-007 OFFER PANEL MODULE SWITCH SAFETY
+Expected:
+- Leaving Offer Panel with unsaved changes triggers protection flow.
+
+F-008 OFFER PANEL WITH COMMUNICATOR LINKS
+Expected:
+- History/list/detail can show linked conversation if offer is attached to chat.
+
+F-009 RELATION-BASED OFFER CONTEXT
+Expected:
+- Offer created from company B source while logged in as company A is tagged to relation A↔B.
+
+====================================================================
+SECTION G - OFFERS, RELATION LOGIC, CHAT LINKING
+====================================================================
+
+G-001 OFFER TO CHAT - AUTO THREAD
+Expected:
+- Sending a new offer can create a new dedicated offer thread.
+
+G-002 GENERAL CHAT TO OFFER ATTACHMENT
+Expected:
+- Existing general relation chat can receive an unbound offer attachment if relation matches and no offer is already attached.
+
+G-003 ONE OFFER TO ONE CHAT RULE
+Expected:
+- One offer can be linked to only one chat.
+- One chat can hold at most one linked offer.
+
+G-004 RELATION HARD VALIDATION A↔B
+Expected:
+- Offer created in relation A↔B cannot be attached or sent to A↔C chat.
+- Backend blocks invalid attachment.
+
+G-005 CHAT LINK FROM OFFER HISTORY
+Expected:
+- Offer history/detail shows linked conversation and allows opening it.
+
+G-006 EDIT SENT OFFER
+Expected:
+- Sent offer remains editable if business rules allow.
+- Editing triggers chat system message with changelog.
+
+G-007 CHANGELOG DETAIL LEVEL
+Expected:
+- Changelog is concise but explicit.
+- Typical changes visible: quantity, item added/removed, discount, comment, status, totals, etc.
+
+G-008 FULL CHANGE HISTORY VISIBILITY
+Expected:
+- Conversation participants can see full offer change history, not only latest state.
+
+G-009 ONLY LEAD HANDLERS CHANGE OFFER STATUS
+Expected:
+- Only authorized/participating handlers can change status in chat-linked offer context.
+
+G-010 STATUS MODEL
+Expected:
+- Required statuses exist and function:
+  - Nowa
+  - W trakcie
+  - Wysłane
+  - Przyjęte
+  - W realizacji
+  - Zrealizowana
+  - Odrzucona
+  - Anulowana
+
+====================================================================
+SECTION H - COMMUNICATOR / THREADS / PARTICIPANTS / PINGS
+====================================================================
+
+H-001 COMMUNICATOR ACTIVE MODULE
+Expected:
+- Communicator exists as active module tile.
+- It is not just a popup.
+
+H-002 GLOBAL SHORTCUT
+Expected:
+- Communicator is accessible from topbar globally.
+
+H-003 THREAD LAYOUT
+Expected:
+- Conversations list + active thread view work properly.
+- Filtering and sorting available.
+
+H-004 THREAD TYPES
+Expected:
+- General relation thread supported.
+- Offer/order-specific thread supported.
+
+H-005 NEW THREAD CATEGORY CHOICE
+Expected:
+- Starting a thread requires or supports choosing category.
+- Categories can be managed/extended in backend.
+
+H-006 THREAD VISIBILITY RULE
+Expected:
+- All users in both related companies can view thread.
+- Participation/lead behavior follows rules.
+
+H-007 FIRST REAL RESPONDER BECOMES LEAD
+Expected:
+- Ping does not auto-assign handler.
+- First actual responder becomes active handler/participant according to rules.
+
+H-008 MULTI-PING SUPPORT
+Expected:
+- User can ping multiple people by account name.
+- From own company and target company if specified.
+
+H-009 PING OPTIONAL
+Expected:
+- New thread/offer send works without ping.
+
+H-010 PING NOT EXCLUSIVE
+Expected:
+- Others can still enter thread even if someone was pinged.
+
+H-011 PING EVENT TYPE
+Expected:
+- Ping appears as specific notification type.
+- It is a one-time event, not permanent assignment.
+
+H-012 THREAD CLOSE
+Expected:
+- Thread can be closed and becomes read-only.
+- Listed as closed in filters.
+
+H-013 THREAD REOPEN
+Expected:
+- Any visible user can reopen thread.
+- Reopening can request/select a reason.
+- If user was not participant earlier, user becomes participant upon reopen.
+
+H-014 REOPEN REASON MODEL
+Expected:
+- Suggested reasons exist plus custom reason option.
+
+H-015 PINNED OFFER CARD
+Expected:
+- In offer-linked thread, offer card can be pinned at top.
+
+H-016 OFFER CARD ACTIONS
+Expected:
+- Offer card includes actions such as Preview, PDF, Open in Offers module, Change status, Go to related company if required.
+
+H-017 ATTACHMENTS IN THREAD
+Expected:
+- PDF/JPG/PNG upload works.
+- 5 files max per message.
+- 10MB total per message.
+- Progress indicators for file count and total size shown.
+
+H-018 ATTACHMENT GALLERY/LIST
+Expected:
+- Thread offers quick access to all attachments.
+- Images show thumbnails if applicable.
+
+H-019 ATTACHMENT RETENTION
+Expected:
+- Attachment expiry info is visible.
+- After retention period the chat still shows expired file entry.
+
+====================================================================
+SECTION I - NOTIFICATIONS CENTER
+====================================================================
+
+I-001 NOTIFICATION CENTER EXISTS
+Expected:
+- Notification bell opens unified notification center.
+
+I-002 NOTIFICATION TABS/SECTIONS
+Expected:
+- Notification center supports sections such as:
+  - Messages
+  - Offers
+  - Requests
+  - Invitations
+  - System
+  or equivalent logically separated views.
+
+I-003 NOTIFICATION TYPES DISTINGUISHED
+Expected:
+- Separate event types exist for:
+  - new message
+  - ping to you
+  - offer attached
+  - offer changed
+  - offer status changed
+  - join request
+  - company invitation
+  - system event
+
+I-004 BADGE COUNTS
+Expected:
+- Badge logic is consistent with agreed rules.
+- No badge desynchronization after read/open actions.
+
+I-005 DEEP LINKING FROM NOTIFICATIONS
+Expected:
+- Clicking notification takes user to correct module/thread/entity.
+
+====================================================================
+SECTION J - COMPANY RELATIONS / INVITATIONS / CONTEXT RULES
+====================================================================
+
+J-001 COMPANY SEARCH
+Expected:
+- Search by name and/or key works.
+- Public result shows allowed identifying fields only.
+
+J-002 RELATION INVITE
+Expected:
+- Company can invite another company to relation.
+
+J-003 RELATION ACCEPT / REJECT
+Expected:
+- Invitee can accept or reject.
+- Notifications generated correctly.
+
+J-004 DIRECTIONAL DISCOUNT RULES
+Expected:
+- Relation stores directional limits if specified.
+- A->B and B->A can be different.
+
+J-005 RELATION MANAGEMENT IN COMPANY MODULE
+Expected:
+- Company & Users module allows viewing/managing connected companies according to permissions.
+
+J-006 RELATION CONTEXT ENFORCEMENT
+Expected:
+- Threads, offers, and source access remain scoped to correct two-company relation.
+
+====================================================================
+SECTION K - CALCULATOR INTEGRATION / LAUNCHER REPLACEMENT
+====================================================================
+
+K-001 CALCULATOR NO LONGER HOSTS FULL LEGACY AUTH MODAL IF REDESIGNED
+Expected:
+- Calculator is updated per new launcher strategy.
+- It should only expose entry point/button to Zegger ERP as specified.
+
+K-002 LAUNCHER WORKS
+Expected:
+- Clicking calculator launcher opens ERP entry flow correctly.
+
+K-003 LEGACY BRIDGE BREAKAGE CHECK
+Expected:
+- No JS errors in calculator after replacing old integration.
+- No orphaned overlays/modals remain.
+
+K-004 RESPONSIVE BUTTON/ENTRY
+Expected:
+- Launcher/button behaves correctly on desktop/mobile.
+
+====================================================================
+SECTION L - MIGRATION / DATA INTEGRITY
+====================================================================
+
+L-001 ZEGGER TECH SEEDED AS FIRST COMPANY
+Expected:
+- Initial company exists as specified.
+
+L-002 LEGACY DATA PRESERVED OR DOCUMENTED
+Expected:
+- Offer data, PDFs, customers, statuses, notes and any key legacy data are preserved or intentionally migrated with documentation.
+
+L-003 NO DUPLICATE OR CORRUPTED RECORDS
+Expected:
+- Migration does not duplicate critical records unexpectedly.
+
+L-004 NEW NAMESPACE / COMPAT LAYER
+Expected:
+- If new REST namespace is used, compatibility strategy is documented and working where needed.
+
+L-005 LEGACY FILE REFERENCES
+Expected:
+- Existing file references and asset paths that matter for offers/PDFs remain valid or are migrated.
+
+====================================================================
+SECTION M - SECURITY / VALIDATION / HARDENING
+====================================================================
+
+M-001 BACKEND PERMISSION ENFORCEMENT
+Expected:
+- Every critical action validated server-side.
+
+M-002 NONCE / TOKEN / AUTH MODEL
+Expected:
+- Auth/session model is implemented safely.
+- No insecure direct action endpoints.
+
+M-003 INPUT SANITIZATION
+Expected:
+- Company data, user data, chat messages, product data, settings, search parameters sanitized and validated.
+
+M-004 OUTPUT ESCAPING
+Expected:
+- UI output escaped appropriately.
+
+M-005 FILE UPLOAD VALIDATION
+Expected:
+- MIME/type/size/count checks enforced server-side.
+- Dangerous files blocked.
+
+M-006 RELATION ACCESS ENFORCEMENT
+Expected:
+- No user can fetch another company’s data without valid relation and permission.
+
+M-007 IMPERSONATION AUDITABILITY
+Expected:
+- Impersonation actions are traceable/auditable if logging exists.
+
+M-008 NO DATA LEAKS IN ERRORS
+Expected:
+- Error messages do not expose secrets or stack traces to end users.
+
+====================================================================
+SECTION N - PERFORMANCE / STABILITY
+====================================================================
+
+N-001 ERP DASHBOARD LOAD
+Expected:
+- Dashboard loads without excessive blocking or fatal delays.
+
+N-002 COMMUNICATOR LOAD WITH MANY THREADS
+Expected:
+- Thread list remains usable with pagination/lazy loading/search/filter strategy.
+
+N-003 OFFER PANEL PERFORMANCE NOT WORSE
+Expected:
+- Legacy pain points are not worsened by ERP shell integration.
+
+N-004 LARGE DATA SOURCE HANDLING
+Expected:
+- Google source and local library remain workable with realistic volume.
+
+N-005 NO CONSOLE ERROR SPAM
+Expected:
+- Browser console free from repetitive critical errors/warnings from new code.
+
+N-006 NO PHP FATALS / DB QUERY FAILURES
+Expected:
+- Logs do not show recurring fatal or SQL schema issues.
+
+====================================================================
+SECTION O - UX / UI QUALITY
+====================================================================
+
+O-001 VISUAL CONSISTENCY
+Expected:
+- ERP shell style matches current modern grayscale/minimal aesthetic.
+- Offer Panel remains visually coherent inside ERP.
+
+O-002 CLEAR STATES
+Expected:
+- Pending, suspended, closed, unread, active, selected, disabled, production-state elements are visually distinct.
+
+O-003 EMPTY STATES
+Expected:
+- Modules with no data show useful empty states.
+
+O-004 CONFIRMATION MODALS
+Expected:
+- Critical actions use clear confirmation UX where required.
+
+O-005 NO OVERFLOW-X
+Expected:
+- No horizontal overflow caused by new shell/modules.
+
+O-006 MOBILE READABILITY
+Expected:
+- Key flows remain usable on mobile.
+
+====================================================================
+SECTION P - FINAL PRODUCTION READINESS
+====================================================================
+
+P-001 INSTALLABLE FINAL ZIP
+Expected:
+- Final plugin ZIP installs cleanly.
+
+P-002 UPDATED CALCULATOR FILE READY TO REPLACE
+Expected:
+- Final calculator file is ready for direct replacement with instructions.
+
+P-003 DOCUMENTED DEPLOYMENT STEPS
+Expected:
+- Deployment/update steps are explicit and ordered.
+
+P-004 DOCUMENTED TEST RESULTS
+Expected:
+- Codex delivery includes summary of what was tested.
+
+P-005 KNOWN LIMITATIONS LIST
+Expected:
+- If anything remains intentionally postponed, it is declared explicitly.
+
+P-006 NO PLACEHOLDER SHIPMENTS
+Expected:
+- No dummy code, fake buttons, dead endpoints, or stub UI in active modules.
+
+====================================================================
+MANDATORY TEST SCENARIOS - CROSS MODULE END-TO-END
+====================================================================
+
+E2E-001 OWNER REGISTERS COMPANY -> LOGS INTO ERP -> SEES DASHBOARD -> CONFIGURES COMPANY -> ENTERS OFFER PANEL
+Expected:
+- Full owner onboarding works end-to-end.
+
+E2E-002 OWNER CREATES USER -> LIMITS VISIBLE MODULES -> USER LOGS IN -> USER SEES ONLY ALLOWED TILES
+Expected:
+- Module visibility and permissions behave correctly.
+
+E2E-003 OWNER CONNECTS GOOGLE SOURCE + ADDS LOCAL PRODUCTS -> OFFER PANEL SHOWS MERGED PRODUCT LIST IN OWN COMPANY CONTEXT
+Expected:
+- Both product sources are available together.
+
+E2E-004 COMPANY A CONNECTS TO COMPANY B -> A CREATES OFFER FROM B DATA -> SENDS OFFER -> DEDICATED THREAD CREATED -> B RESPONDS -> STATUS/THREAD FLOW WORKS
+Expected:
+- Relation-based commerce flow works end-to-end.
+
+E2E-005 GENERAL THREAD A↔B STARTED WITHOUT OFFER -> LATER OFFER IS ATTACHED -> OFFER CARD APPEARS -> HISTORY LINKS BOTH WAYS
+Expected:
+- Offer attachment to existing relation thread works.
+
+E2E-006 SENT OFFER IS EDITED -> THREAD GETS CHANGELOG MESSAGE -> OTHER SIDE SEES HISTORY
+Expected:
+- Offer change synchronization works.
+
+E2E-007 THREAD CLOSED -> ANOTHER USER REOPENS WITH REASON -> USER BECOMES PARTICIPANT
+Expected:
+- Reopen logic works.
+
+E2E-008 PING MULTIPLE USERS -> NON-PINGED PERSON ANSWERS FIRST -> THAT PERSON BECOMES HANDLER
+Expected:
+- Ping is advisory, not exclusive.
+
+E2E-009 SUSPENDED USER CANNOT LOGIN -> OWNER IMPERSONATES USER -> REACTIVATES ACCOUNT
+Expected:
+- Suspension and recovery flow works.
+
+E2E-010 ERP LAUNCH FROM CALCULATOR BUTTON -> LOGIN -> DASHBOARD -> OPEN OFFER PANEL
+Expected:
+- Calculator integration works cleanly.
+
+====================================================================
+RELEASE GATE
+====================================================================
+
+THE BUILD IS ACCEPTED ONLY IF:
+- Critical business flows pass.
+- Offer Panel regression is not introduced.
+- Company/user/permissions model is enforced server-side.
+- Relation-based restrictions A↔B are enforced.
+- Communicator, notifications, sources, and ERP shell work as an integrated whole.
+- Calculator entry point works.
+- Final code and files are deployment-ready.
+
+END OF FILE

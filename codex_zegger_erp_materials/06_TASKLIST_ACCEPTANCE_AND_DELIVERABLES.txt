@@ -1,0 +1,265 @@
+ZEGGER ERP - TASKLIST / ACCEPTANCE / DELIVERABLES
+=================================================
+
+1. GŁÓWNE ZADANIE
+-----------------
+Masz przygotować w pełni działający nowy system Zegger ERP na bazie obecnego pluginu i kalkulatora.
+
+2. TWARDY ZAKRES DOSTARCZENIA
+-----------------------------
+Musisz dostarczyć:
+1. nowy plugin Zegger ERP
+2. nową architekturę ERP shell
+3. działający moduł Panel Ofertowy w ERP
+4. działający moduł Firma i użytkownicy
+5. działający moduł Biblioteka produktów i źródła danych
+6. działający moduł Komunikator
+7. działające centrum powiadomień
+8. migrację / zachowanie danych i funkcji legacy, gdzie to wymagane
+9. zaktualizowany kalkulator z lekkim launcherem do ERP
+10. instrukcję wdrożenia
+11. rollback plan
+
+3. DETAILED TASKLIST
+--------------------
+
+3.1. Analiza i przygotowanie
+- przeanalizuj obecny kalkulator HTML i jego bridge/login/iframe host
+- przeanalizuj obecny plugin zq-offer-suite i jego moduły
+- ustal, które części panelu ofertowego zachowujesz 1:1 logicznie/UI, a które refaktorujesz
+- przygotuj nowy plugin scaffold
+
+3.2. DB i migracje
+- zaprojektuj nowe tabele ERP
+- dodaj activation/migration routines
+- zaimplementuj upgrade path
+- przygotuj bootstrap firmy Zegger Tech
+- przygotuj mapowanie starych danych do nowych struktur
+- nie blokuj całości migracją starych kont, jeśli to zbędne
+
+3.3. Auth i onboarding
+- nowy ekran logowania
+- nowy wizard rejestracji firmy
+- nowy wizard rejestracji użytkownika do firmy
+- join request flow
+- TTL kont bez firmy
+- blokada duplikatu firmy po NIP
+- owner bootstrap
+
+3.4. ERP shell
+- routing aplikacji
+- topbar
+- dashboard modułów
+- kafle aktywne
+- kafle "W produkcji"
+- summary strip
+- guard niezapisanych zmian
+- impersonation banner
+
+3.5. Firma i użytkownicy
+- CRUD firmy
+- lista użytkowników
+- tworzenie kont
+- role
+- granularne uprawnienia
+- widoczność modułów
+- reset haseł
+- zawieszanie i odwieszanie
+- relacje firma-firma
+
+3.6. Biblioteka produktów i źródła
+- konfiguracja Google Sheets
+- sync/cache
+- biblioteka lokalna
+- kategorie/podkategorie
+- warianty/kolory/SKU
+- wspólny model źródeł danych
+- reguła dynamicznego rozpoznawania kolumn "Nr towaru ..."
+
+3.7. Panel Ofertowy jako moduł
+- zachowanie wyglądu i flow obecnego panelu
+- integracja z nowymi źródłami danych
+- integracja z relacjami firma-firma
+- integracja z chatem
+- zachowanie PDF
+- zachowanie klientów
+- zachowanie historii
+- zachowanie statusów (z nowym mapowaniem)
+
+3.8. Komunikator
+- lista rozmów
+- wątki ogólne
+- wątki ofertowe
+- kategorie rozmów
+- pingi do osób
+- uczestnicy/prowadzący
+- przypinanie oferty do rozmowy
+- changelog zmian oferty
+- załączniki
+- retencja plików
+- zamykanie/wznawianie rozmów
+- twarda walidacja relacji A↔B
+
+3.9. Powiadomienia
+- bell center
+- sekcje tabs
+- unread states
+- osobne typy zdarzeń
+- przejścia do rozmów/ofert/prośb
+
+3.10. Kalkulator
+- usuń zależność od starego ciężkiego modala panelu
+- zostaw lekki launcher/przycisk
+- uruchamiaj Zegger ERP jako nową aplikację
+- zadbaj o prostą integrację do wklejenia
+
+3.11. Admin WP
+- firmy
+- użytkownicy
+- relacje
+- kategorie rozmów
+- diagnostyka
+- maintenance
+
+3.12. Dokumentacja wdrożenia
+- jak zainstalować plugin
+- jak przejść z legacy
+- jak podmienić kalkulator
+- co sprawdzić po wdrożeniu
+- rollback
+
+4. ACCEPTANCE CRITERIA - HIGH LEVEL
+-----------------------------------
+Projekt jest ukończony dopiero wtedy, gdy:
+
+4.1. ERP działa jako spójna aplikacja
+- można się zalogować
+- można zarejestrować firmę
+- można wysłać prośbę o dołączenie do firmy
+- po zalogowaniu trafia się na dashboard modułów
+
+4.2. Moduły działają
+- Panel Ofertowy działa
+- Komunikator działa
+- Firma i użytkownicy działają
+- Biblioteka produktów / źródła danych działa
+
+4.3. Panel Ofertowy nie utracił funkcji krytycznych
+- tworzenie oferty działa
+- historia działa
+- klienci działają
+- PDF działa
+- statusy działają
+- UI nie jest zdegradowane
+
+4.4. Komunikator działa zgodnie z regułami
+- tworzenie rozmów
+- przypinanie ofert
+- 1 oferta = 1 rozmowa max
+- 1 rozmowa = 1 oferta max
+- walidacja relacji A↔B
+- pingi
+- załączniki
+- wznowienie rozmowy
+- changelog zmian oferty
+
+4.5. Dane produktowe działają poprawnie
+- Google source działa
+- biblioteka lokalna działa
+- wspólna lista źródeł działa
+- kolory/SKU z "Nr towaru ..." działają dynamicznie
+
+4.6. Uprawnienia działają
+- owner pełny dostęp
+- manager ograniczalny
+- user ograniczalny
+- widoczność modułów działa
+- impersonacja działa zgodnie z regułami
+
+4.7. Kalkulator został poprawiony
+- ma tylko lekki launcher
+- uruchamia ERP poprawnie
+- nie niesie już starego ciężkiego flow jako jedynego rozwiązania
+
+5. ACCEPTANCE CRITERIA - DETAILED CHECKLIST
+-------------------------------------------
+[AUTH]
+- logowanie działa
+- rejestracja firmy działa
+- rejestracja użytkownika do firmy działa
+- join request działa
+- konto bez firmy wygasa wg TTL
+- NIP dedupe działa
+
+[DASHBOARD]
+- użytkownik widzi tylko swoje moduły
+- owner widzi wszystko
+- w produkcji są wyszarzone poprawnie
+- topbar jest globalny
+
+[FIRMA I UŻYTKOWNICY]
+- tworzenie kont działa
+- edycja działa
+- reset hasła działa
+- zawieszanie działa
+- owner nie może zablokować siebie
+- impersonacja działa
+- banner impersonacji działa
+
+[ŹRÓDŁA]
+- można skonfigurować Google
+- sync działa
+- katalog lokalny działa
+- kolory i SKU interpretują się poprawnie
+
+[OFERTY]
+- nowa oferta działa
+- historia działa
+- klient działa
+- PDF działa
+- statusy działają
+- przypięcie do chatu działa
+- edycja oferty po wysłaniu loguje zmiany w czacie
+
+[KOMUNIKATOR]
+- rozmowa ogólna działa
+- rozmowa ofertowa działa
+- przypięcie oferty do istniejącej rozmowy działa
+- nie da się przypiąć 2 ofert do 1 rozmowy
+- nie da się powiązać oferty spoza relacji
+- pingi działają
+- pierwsza odpowiedź przejmuje obsługę
+- załączniki działają
+- wygaśnięcie pliku jest widoczne
+- rozmowy zamknięte/wznowione działają
+
+[POWIADOMIENIA]
+- dzwonek działa
+- wiadomości/oferty/prośby/zaproszenia/system są rozróżnione
+- linkowanie do obiektów działa
+
+[KALKULATOR]
+- nowy launcher działa
+- otwiera ERP
+- nie psuje kalkulatora
+
+6. FINAL DELIVERABLES
+---------------------
+Na końcu masz oddać:
+1. gotowy kod nowego pluginu
+2. gotowy kod zaktualizowanego kalkulatora
+3. instrukcję instalacji / migracji
+4. checklistę wdrożeniową
+5. rollback plan
+6. opis zmian względem legacy
+7. jeśli tworzysz ZIP - gotowy ZIP pluginu
+
+7. WYMAGANIE KOŃCOWE
+--------------------
+Nie zadawaj kolejnych pytań biznesowych, jeśli da się podjąć sensowną decyzję techniczną w ramach tego specu.
+Masz już komplet kierunku i zasad działania.
+Jeśli jakaś decyzja techniczna jest nieopisana, wybierz wariant:
+- przyszłościowy
+- skalowalny
+- zgodny z istniejącym UX panelu ofertowego
+- bezpieczny pod względem danych i regresji
