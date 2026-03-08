@@ -26,10 +26,10 @@
     notifier: document.getElementById('zerp-notification-count'),
     btnNotifications: document.getElementById('zerp-open-notifications'),
     btnCommunicator: document.getElementById('zerp-open-communicator'),
+    btnNav: document.getElementById('zerp-open-nav'),
     impersonationBanner: document.getElementById('zerp-impersonation-banner'),
     userBtn: document.getElementById('zerp-user-menu-btn'),
   };
-
   function setToken(token) {
     state.token = token || '';
     if (state.token) {
@@ -39,9 +39,47 @@
     }
   }
 
+  function splitPathAndQuery(path) {
+    const raw = String(path || '').replace(/^\/+/, '');
+    const idx = raw.indexOf('?');
+    if (idx === -1) {
+      return { routePath: raw, query: '' };
+    }
+    return {
+      routePath: raw.slice(0, idx),
+      query: raw.slice(idx + 1),
+    };
+  }
+
+  function buildApiUrl(path) {
+    const baseRaw = (CFG.rest_base || '/wp-json/' + (CFG.rest_ns || 'zegger-erp/v1') + '/').replace(/\/+$/, '/');
+    const parts = splitPathAndQuery(path);
+    const urlObj = new URL(baseRaw, window.location.origin);
+
+    if (urlObj.searchParams.has('rest_route')) {
+      let restRoute = String(urlObj.searchParams.get('rest_route') || '/');
+      if (restRoute.charAt(0) !== '/') {
+        restRoute = '/' + restRoute;
+      }
+      restRoute = restRoute.replace(/\/+$/, '/') + parts.routePath;
+      urlObj.searchParams.set('rest_route', restRoute);
+    } else {
+      urlObj.pathname = urlObj.pathname.replace(/\/+$/, '/') + parts.routePath;
+    }
+
+    if (parts.query) {
+      const qp = new URLSearchParams(parts.query);
+      qp.forEach(function (value, key) {
+        urlObj.searchParams.set(key, value);
+      });
+    }
+
+    return urlObj.toString();
+  }
+
   async function api(path, opts) {
     const cfg = Object.assign({ method: 'GET', body: null }, opts || {});
-    const url = (CFG.rest_base || '/wp-json/' + (CFG.rest_ns || 'zegger-erp/v1') + '/').replace(/\/+$/, '/') + String(path).replace(/^\/+/, '');
+    const url = buildApiUrl(path);
 
     const headers = { 'Accept': 'application/json' };
     if (CFG.nonce) {
@@ -66,7 +104,7 @@
     const payload = isJson ? await res.json() : null;
 
     if (!res.ok) {
-      const msg = payload && payload.message ? payload.message : 'BÄąâ€šĂ„â€¦d HTTP ' + res.status;
+      const msg = payload && payload.message ? payload.message : 'Błąd HTTP ' + res.status;
       const err = new Error(msg);
       err.status = res.status;
       err.payload = payload;
@@ -92,8 +130,17 @@
       .replace(/'/g, '&#039;');
   }
 
+  function stableHash(input) {
+    const source = String(input || '');
+    let hash = 2166136261;
+    for (let i = 0; i < source.length; i += 1) {
+      hash ^= source.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return ('h' + (hash >>> 0).toString(16));
+  }
 
-    function moduleMeta(moduleId) {
+  function moduleMeta(moduleId) {
     const map = {
       dashboard: { icon: 'DS', hint: 'Launcher' },
       offers: { icon: 'OF', hint: 'Oferty' },
@@ -132,7 +179,25 @@
       });
     }, 120);
   }
-function authLogoMarkup() {
+
+  function closeNavDrawer() {
+    document.body.classList.remove('zerp-nav-open');
+  }
+
+  function toggleNavDrawer(forceOpen) {
+    if (document.body.classList.contains('zerp-prelogin')) {
+      return;
+    }
+
+    if (typeof forceOpen === 'boolean') {
+      document.body.classList.toggle('zerp-nav-open', forceOpen);
+      return;
+    }
+
+    document.body.classList.toggle('zerp-nav-open');
+  }
+
+  function authLogoMarkup() {
     const src = escapeHtml(String(CFG.auth_logo_url || DEFAULT_AUTH_LOGO_URL));
     return '<div class="zerp-auth-brand-mark"><img src="' + src + '" alt="Zegger"></div>';
   }
@@ -179,9 +244,12 @@ function authLogoMarkup() {
     el.modalRoot.appendChild(back);
   }
 
-    function setPreLoginMode(enabled) {
+  function setPreLoginMode(enabled) {
     const on = !!enabled;
     document.body.classList.toggle('zerp-prelogin', on);
+    if (on) {
+      closeNavDrawer();
+    }
 
     if (el.app) {
       el.app.classList.toggle('zerp-prelogin', on);
@@ -206,7 +274,7 @@ function authLogoMarkup() {
 
     el.moduleView.classList.remove('is-view-enter', 'is-view-leaving');
   }
-function clearViews() {
+  function clearViews() {
     el.authView.hidden = true;
     el.moduleView.hidden = true;
     el.authView.innerHTML = '';
@@ -217,7 +285,7 @@ function clearViews() {
     clearViews();
     setPreLoginMode(true);
     el.authView.hidden = false;
-    el.authView.innerHTML = '<div class="zerp-auth-scene"><div class="zerp-auth-backdrop"></div><div class="zerp-auth-overlay"></div><section class="zerp-auth-card"><header class="zerp-auth-head">' + authLogoMarkup() + '<p class="zerp-auth-kicker">Zegger ERP</p><h1>Weryfikacja sesji</h1><p class="zerp-auth-lead">Sprawdzamy Twoje konto. To potrwa chwilĂ„â„˘.</p></header><div class="zerp-info">ÄąÂadowanie...</div></section></div>';
+    el.authView.innerHTML = '<div class="zerp-auth-scene"><div class="zerp-auth-backdrop"></div><div class="zerp-auth-overlay"></div><section class="zerp-auth-card"><header class="zerp-auth-head">' + authLogoMarkup() + '<p class="zerp-auth-kicker">Zegger ERP</p><h1>Weryfikacja sesji</h1><p class="zerp-auth-lead">Sprawdzamy Twoje konto. To potrwa chwilę.</p></header><div class="zerp-info">Ładowanie...</div></section></div>';
   }
 
   function wirePasswordToggles(scope) {
@@ -235,7 +303,7 @@ function clearViews() {
 
         const show = input.type === 'password';
         input.type = show ? 'text' : 'password';
-        btn.setAttribute('aria-label', show ? 'Ukryj hasÄąâ€šo' : 'PokaÄąÄ˝ hasÄąâ€šo');
+        btn.setAttribute('aria-label', show ? 'Ukryj hasło' : 'Pokaż hasło');
         btn.classList.toggle('is-active', show);
       });
     });
@@ -253,15 +321,15 @@ function clearViews() {
         <section class="zerp-auth-card" aria-label="Ekran logowania Zegger ERP">
           <header class="zerp-auth-head">
             ${authLogoMarkup()}
-            <p class="zerp-auth-kicker">Strefa dostĂ„â„˘pu</p>
+            <p class="zerp-auth-kicker">Strefa dostępu</p>
             <h1>Logowanie do Zegger ERP</h1>
-            <p class="zerp-auth-lead">Nowoczesne Äąâ€şrodowisko ofert, relacji i komunikacji w jednym miejscu.</p>
+            <p class="zerp-auth-lead">Nowoczesne środowisko ofert, relacji i komunikacji w jednym miejscu.</p>
           </header>
 
           <div class="zerp-auth-segment" role="tablist" aria-label="Sekcje konta">
             <button class="zerp-auth-segment-btn is-active" type="button" role="tab" aria-selected="true" data-auth-tab="login">Logowanie</button>
             <button class="zerp-auth-segment-btn" type="button" role="tab" aria-selected="false" data-auth-tab="register-company">Nowa firma</button>
-            <button class="zerp-auth-segment-btn" type="button" role="tab" aria-selected="false" data-auth-tab="register-member">DoÄąâ€šĂ„â€¦cz do firmy</button>
+            <button class="zerp-auth-segment-btn" type="button" role="tab" aria-selected="false" data-auth-tab="register-member">Dołącz do firmy</button>
           </div>
 
           <div id="zerp-auth-feedback" class="zerp-auth-feedback" aria-live="polite"></div>
@@ -287,10 +355,10 @@ function clearViews() {
               <input class="zerp-input" name="login" autocomplete="username" required>
             </div>
             <div class="zerp-field">
-              <label>HasÄąâ€šo</label>
+              <label>Hasło</label>
               <div class="zerp-input-wrap">
                 <input class="zerp-input" name="password" type="password" autocomplete="current-password" required>
-                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="PokaÄąÄ˝ hasÄąâ€šo">&#128065;</button>
+                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
               </div>
             </div>
             <div class="zerp-actions">
@@ -315,7 +383,7 @@ function clearViews() {
             setToken(result.token || '');
             await afterAuth();
           } catch (err) {
-            showInfo(feedback, err.message || 'BÄąâ€šĂ„â€¦d logowania.', true);
+            showInfo(feedback, err.message || 'Błąd logowania.', true);
           }
         });
         return;
@@ -329,16 +397,16 @@ function clearViews() {
               <span class="zerp-auth-step">2. Dane firmy</span>
             </div>
 
-            <div class="zerp-auth-section-label" style="grid-column:1/-1">Krok 1 - Konto uÄąÄ˝ytkownika</div>
-            <div class="zerp-field"><label>ImiĂ„â„˘</label><input class="zerp-input" name="first_name" required></div>
+            <div class="zerp-auth-section-label" style="grid-column:1/-1">Krok 1 - Konto użytkownika</div>
+            <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>
             <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>
             <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" autocomplete="email" required></div>
             <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone" autocomplete="tel"></div>
             <div class="zerp-field" style="grid-column:1/-1">
-              <label>HasÄąâ€šo</label>
+              <label>Hasło</label>
               <div class="zerp-input-wrap">
                 <input class="zerp-input" name="password" type="password" minlength="8" autocomplete="new-password" required>
-                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="PokaÄąÄ˝ hasÄąâ€šo">&#128065;</button>
+                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
               </div>
             </div>
 
@@ -350,7 +418,7 @@ function clearViews() {
             <div class="zerp-field" style="grid-column:1/-1"><label>Adres firmy</label><textarea name="company_address"></textarea></div>
 
             <div class="zerp-actions" style="grid-column:1/-1">
-              <button class="zerp-btn zerp-btn-primary" type="submit">UtwÄ‚Ĺ‚rz firmĂ„â„˘</button>
+              <button class="zerp-btn zerp-btn-primary" type="submit">Utwórz firmę</button>
             </div>
           </form>`;
 
@@ -368,10 +436,10 @@ function clearViews() {
               await afterAuth();
               return;
             }
-            showInfo(feedback, 'Firma utworzona. Zaloguj siĂ„â„˘.', false);
+            showInfo(feedback, 'Firma utworzona. Zaloguj się.', false);
             setTab('login');
           } catch (err) {
-            showInfo(feedback, err.message || 'BÄąâ€šĂ„â€¦d rejestracji.', true);
+            showInfo(feedback, err.message || 'Błąd rejestracji.', true);
           }
         });
         return;
@@ -379,26 +447,26 @@ function clearViews() {
 
       body.innerHTML = `
         <form id="zerp-register-member" class="zerp-form-grid cols-2 zerp-auth-form-complex">
-          <div class="zerp-auth-section-label" style="grid-column:1/-1">Konto uÄąÄ˝ytkownika</div>
-          <div class="zerp-field"><label>ImiĂ„â„˘</label><input class="zerp-input" name="first_name" required></div>
+          <div class="zerp-auth-section-label" style="grid-column:1/-1">Konto użytkownika</div>
+          <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>
           <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>
           <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" required></div>
           <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone"></div>
           <div class="zerp-field" style="grid-column:1/-1">
-            <label>HasÄąâ€šo</label>
+            <label>Hasło</label>
             <div class="zerp-input-wrap">
               <input class="zerp-input" name="password" type="password" minlength="8" autocomplete="new-password" required>
-              <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="PokaÄąÄ˝ hasÄąâ€šo">&#128065;</button>
+              <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
             </div>
           </div>
 
-          <div class="zerp-auth-section-label" style="grid-column:1/-1">Dane doÄąâ€šĂ„â€¦czenia</div>
+          <div class="zerp-auth-section-label" style="grid-column:1/-1">Dane dołączenia</div>
           <div class="zerp-field"><label>Nazwa firmy (opcjonalnie)</label><input class="zerp-input" name="company_query"></div>
           <div class="zerp-field"><label>Join code (opcjonalnie)</label><input class="zerp-input" name="join_code"></div>
-          <p class="zerp-auth-help" style="grid-column:1/-1">JeÄąâ€şli masz kod zaproszenia firmy, wpisz go. Wniosek szybciej trafi do wÄąâ€šaÄąâ€şciwego ownera.</p>
+          <p class="zerp-auth-help" style="grid-column:1/-1">Jeśli masz kod zaproszenia firmy, wpisz go. Wniosek szybciej trafi do właściwego ownera.</p>
 
           <div class="zerp-actions" style="grid-column:1/-1">
-            <button class="zerp-btn zerp-btn-primary" type="submit">WyÄąâ€şlij proÄąâ€şbĂ„â„˘ o doÄąâ€šĂ„â€¦czenie</button>
+            <button class="zerp-btn zerp-btn-primary" type="submit">Wyślij prośbę o dołączenie</button>
           </div>
         </form>`;
 
@@ -406,15 +474,15 @@ function clearViews() {
 
       document.getElementById('zerp-register-member').addEventListener('submit', async function (ev) {
         ev.preventDefault();
-        showInfo(feedback, 'WysyÄąâ€šanie proÄąâ€şby...', false);
+        showInfo(feedback, 'Wysyłanie prośby...', false);
         const form = new FormData(ev.currentTarget);
         const bodyPayload = Object.fromEntries(form.entries());
         try {
           await api('auth/register/member', { method: 'POST', body: bodyPayload });
-          showInfo(feedback, 'Wniosek wysÄąâ€šany. Poczekaj na akceptacjĂ„â„˘.', false);
+          showInfo(feedback, 'Wniosek wysłany. Poczekaj na akceptację.', false);
           setTab('login');
         } catch (err) {
-          showInfo(feedback, err.message || 'BÄąâ€šĂ„â€¦d rejestracji.', true);
+          showInfo(feedback, err.message || 'Błąd rejestracji.', true);
         }
       });
     }
@@ -435,14 +503,14 @@ function clearViews() {
 
     if (state.me && state.me.actor_member_id && state.me.actor_member_id !== state.me.id) {
       el.impersonationBanner.hidden = false;
-      el.impersonationBanner.innerHTML = '<span>Tryb impersonacji jest aktywny.</span><button class="zerp-btn" id="zerp-stop-impersonation">WrÄ‚Ĺ‚Ă„â€ˇ do swojego konta</button>';
+      el.impersonationBanner.innerHTML = '<span>Tryb impersonacji jest aktywny.</span><button class="zerp-btn" id="zerp-stop-impersonation">Wróć do swojego konta</button>';
       document.getElementById('zerp-stop-impersonation').addEventListener('click', async function () {
         try {
           const result = await api('auth/restore-self', { method: 'POST', body: {} });
           setToken(result.token || '');
           await afterAuth();
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zakoÄąâ€žczyĂ„â€ˇ impersonacji.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zakończyć impersonacji.') + '</p>', [{ label: 'OK' }]);
         }
       });
     } else {
@@ -481,59 +549,76 @@ function clearViews() {
     }
 
     if (!target) {
-      el.moduleView.innerHTML = '<div class="zerp-card"><h3>Brak dostĂ„â„˘pnych moduÄąâ€šÄ‚Ĺ‚w</h3><p class="zerp-muted">Skontaktuj siĂ„â„˘ z ownerem firmy, aby nadaĂ„â€ˇ widocznoÄąâ€şĂ„â€ˇ moduÄąâ€šÄ‚Ĺ‚w.</p></div>';
+      el.moduleView.innerHTML = '<div class="zerp-card"><h3>Brak dostępnych modułów</h3><p class="zerp-muted">Skontaktuj się z ownerem firmy, aby nadać widoczność modułów.</p></div>';
       return;
     }
 
     switchModule(target);
   }
 
-    function renderSidebar() {
+  function renderSidebar() {
     const active = state.modules.active || [];
     const future = state.modules.future || [];
-    const html = [];
-
-    html.push('<div class="zerp-nav-track">');
+    const desktop = [];
+    const mobile = [];
 
     active.forEach(function (mod) {
       const meta = moduleMeta(mod.id);
-      html.push(
+      const node = '' +
         '<button class="zerp-nav-pill zerp-sidebar-item" data-module="' + escapeHtml(mod.id) + '">' +
         '  <span class="zerp-nav-pill-icon" aria-hidden="true">' + escapeHtml(meta.icon) + '</span>' +
         '  <span class="zerp-sidebar-item-label">' + escapeHtml(mod.label) + '</span>' +
-        '</button>'
-      );
+        '</button>';
+      desktop.push(node);
+      mobile.push(node);
     });
 
     if (future.length) {
-      html.push('<div class="zerp-nav-divider">W produkcji</div>');
+      desktop.push('<div class="zerp-nav-divider">W produkcji</div>');
+      mobile.push('<div class="zerp-nav-divider">W produkcji</div>');
+
       future.forEach(function (mod) {
         const meta = moduleMeta(mod.id);
-        html.push(
+        const node = '' +
           '<button class="zerp-nav-pill zerp-sidebar-item is-disabled" data-disabled="1" title="W produkcji">' +
           '  <span class="zerp-nav-pill-icon" aria-hidden="true">' + escapeHtml(meta.icon) + '</span>' +
           '  <span class="zerp-sidebar-item-label">' + escapeHtml(mod.label) + '</span>' +
-          '</button>'
-        );
+          '</button>';
+        desktop.push(node);
+        mobile.push(node);
       });
     }
 
-    html.push('</div>');
-    el.sidebar.innerHTML = html.join('');
+    el.sidebar.innerHTML = '' +
+      '<div class="zerp-nav-track zerp-nav-track-desktop">' + desktop.join('') + '</div>' +
+      '<div class="zerp-nav-mobile-backdrop" data-nav-close="1"></div>' +
+      '<div class="zerp-nav-drawer-panel" role="dialog" aria-label="Nawigacja modulow">' +
+      '  <div class="zerp-nav-drawer-head">' +
+      '    <strong>Moduly ERP</strong>' +
+      '    <button type="button" class="zerp-btn" data-nav-close="1">Zamknij</button>' +
+      '  </div>' +
+      '  <div class="zerp-nav-track zerp-nav-track-mobile">' + mobile.join('') + '</div>' +
+      '</div>';
 
     el.sidebar.querySelectorAll('[data-module]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         switchModule(btn.getAttribute('data-module') || 'dashboard');
       });
     });
+
+    el.sidebar.querySelectorAll('[data-nav-close]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        closeNavDrawer();
+      });
+    });
   }
-async function switchModule(targetModule) {
+  async function switchModule(targetModule) {
     if (!targetModule || targetModule === state.currentModule) {
       return;
     }
 
     if (state.moduleInstance && typeof state.moduleInstance.hasUnsavedChanges === 'function' && state.moduleInstance.hasUnsavedChanges()) {
-      mountModal('Niezapisane zmiany', '<p>Wykryto niezapisane zmiany. Co chcesz zrobiĂ„â€ˇ?</p>', [
+      mountModal('Niezapisane zmiany', '<p>Wykryto niezapisane zmiany. Co chcesz zrobić?</p>', [
         {
           label: 'Zapisz',
           className: 'zerp-btn-primary',
@@ -545,7 +630,7 @@ async function switchModule(targetModule) {
           }
         },
         {
-          label: 'OdrzuĂ„â€ˇ',
+          label: 'Odrzuć',
           className: 'zerp-btn-danger',
           onClick: function () {
             if (state.moduleInstance && typeof state.moduleInstance.discardChanges === 'function') {
@@ -562,7 +647,7 @@ async function switchModule(targetModule) {
     doSwitch(targetModule);
   }
 
-    function doSwitch(targetModule) {
+  function doSwitch(targetModule) {
     const previousModule = state.currentModule;
     state.currentModule = targetModule;
 
@@ -576,7 +661,7 @@ async function switchModule(targetModule) {
 
     const labelMap = {};
     (state.modules.active || []).forEach(function (mod) { labelMap[mod.id] = mod.label; });
-    el.moduleLabel.textContent = labelMap[targetModule] || 'ModuÄąâ€š';
+    el.moduleLabel.textContent = labelMap[targetModule] || 'Modul';
 
     const renderTarget = function () {
       if (targetModule === 'dashboard') {
@@ -604,16 +689,18 @@ async function switchModule(targetModule) {
         return;
       }
 
-      el.moduleView.innerHTML = '<div class="zerp-card"><h3>ModuÄąâ€š niedostĂ„â„˘pny</h3></div>';
+      el.moduleView.innerHTML = '<div class="zerp-card"><h3>Modul niedostepny</h3></div>';
       state.moduleInstance = { hasUnsavedChanges: function () { return false; } };
     };
 
     if (!previousModule) {
       renderTarget();
+      closeNavDrawer();
       return;
     }
 
     runModuleTransition(renderTarget);
+    closeNavDrawer();
   }
   function moduleDashboard() {
     const wrap = document.createElement('div');
@@ -623,7 +710,7 @@ async function switchModule(targetModule) {
       '  <div class="zerp-launcher-hero-copy">' +
       '    <p class="zerp-kicker">Zegger ERP</p>' +
       '    <h2>Centrum pracy</h2>' +
-      '    <p class="zerp-launcher-lead">Wybierz obszar roboczy i przechodÄąĹź miĂ„â„˘dzy moduÄąâ€šami w jednym, kompaktowym oknie aplikacji.</p>' +
+      '    <p class="zerp-launcher-lead">Wybierz obszar roboczy i przechodz miedzy modulami w jednym, kompaktowym oknie aplikacji.</p>' +
       '  </div>' +
       '  <div class="zerp-summary-strip zerp-summary-strip--launcher" id="zerp-summary-strip"></div>' +
       '</section>' +
@@ -649,7 +736,7 @@ async function switchModule(targetModule) {
         '</div>' +
         '<div class="zerp-launcher-tile-title">' + escapeHtml(mod.label) + '</div>' +
         '<div class="zerp-launcher-tile-desc">' + escapeHtml(mod.description || '') + '</div>' +
-        '<div class="zerp-launcher-tile-cta">PrzejdÄąĹź do moduÄąâ€šu</div>';
+        '<div class="zerp-launcher-tile-cta">Przejdz do modulu</div>';
       tile.addEventListener('click', function () { switchModule(mod.id); });
       tileContainer.appendChild(tile);
     });
@@ -658,7 +745,7 @@ async function switchModule(targetModule) {
     if (future.length) {
       const title = document.createElement('h3');
       title.className = 'zerp-launcher-future-title';
-      title.textContent = 'ModuÄąâ€šy w produkcji';
+      title.textContent = 'Moduly w produkcji';
       futureContainer.appendChild(title);
 
       const grid = document.createElement('div');
@@ -674,7 +761,7 @@ async function switchModule(targetModule) {
           '  <span class="zerp-launcher-chip">W produkcji</span>' +
           '</div>' +
           '<div class="zerp-launcher-tile-title">' + escapeHtml(mod.label) + '</div>' +
-          '<div class="zerp-launcher-tile-desc">ModuÄąâ€š jest przygotowywany do uruchomienia.</div>';
+          '<div class="zerp-launcher-tile-desc">Modul jest przygotowywany do uruchomienia.</div>';
         grid.appendChild(tile);
       });
 
@@ -698,14 +785,14 @@ async function switchModule(targetModule) {
       discardChanges: function () {}
     };
   }
-function moduleOffers() {
+  function moduleOffers() {
     const cardHtml = '' +
       '<div class="zerp-card">' +
       '  <div class="zerp-row" style="margin-bottom:8px">' +
       '    <strong>Panel Ofertowy</strong>' +
-      '    <a class="zerp-btn" target="_blank" rel="noopener" href="' + escapeHtml(CFG.legacy_offer_panel_url || '#') + '">OtwÄ‚Ĺ‚rz w nowej karcie</a>' +
+      '    <a class="zerp-btn" target="_blank" rel="noopener" href="' + escapeHtml(CFG.legacy_offer_panel_url || '#') + '">Otwórz w nowej karcie</a>' +
       '  </div>' +
-      '  <div id="zerp-offers-mount-point" class="zerp-offers-inline-host"><div class="zerp-muted">ÄąÂadowanie Panelu Ofertowego...</div></div>' +
+      '  <div id="zerp-offers-mount-point" class="zerp-offers-inline-host"><div class="zerp-muted">Ładowanie Panelu Ofertowego...</div></div>' +
       '</div>';
 
     el.moduleView.innerHTML = cardHtml;
@@ -747,21 +834,27 @@ function moduleOffers() {
       globalHost.hidden = true;
     };
 
-    const executeInlineScripts = async function (doc) {
+    const executeInlineScripts = async function (doc, legacyBaseUrl) {
       const scripts = Array.prototype.slice.call(doc.querySelectorAll('script'));
       for (let i = 0; i < scripts.length; i += 1) {
-        const src = scripts[i].getAttribute('src');
+        const srcRaw = scripts[i].getAttribute('src');
         const code = scripts[i].textContent || '';
 
         await new Promise(function (resolve, reject) {
           const s = document.createElement('script');
           s.setAttribute('data-zerp-offers-runtime', '1');
 
-          if (src) {
-            s.src = src;
+          if (srcRaw) {
+            let resolvedSrc = srcRaw;
+            try {
+              resolvedSrc = new URL(srcRaw, legacyBaseUrl).toString();
+            } catch (e) {
+              // fallback to original src
+            }
+            s.src = resolvedSrc;
             s.async = false;
             s.onload = function () { resolve(); };
-            s.onerror = function () { reject(new Error('Nie udaÄąâ€šo siĂ„â„˘ zaÄąâ€šadowaĂ„â€ˇ skryptu legacy: ' + src)); };
+            s.onerror = function () { reject(new Error('Nie udało się załadować skryptu legacy: ' + resolvedSrc)); };
           } else {
             s.text = code;
             resolve();
@@ -771,22 +864,38 @@ function moduleOffers() {
         });
       }
     };
-
-    const injectLegacyMarkup = async function (html) {
+    const injectLegacyMarkup = async function (html, legacyBaseUrl) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
       const headStyles = Array.prototype.slice.call(doc.head.querySelectorAll('style,link[rel="stylesheet"]'));
       headStyles.forEach(function (node) {
         if (node.tagName === 'LINK') {
-          const href = node.getAttribute('href') || '';
-          if (!href || document.head.querySelector('link[data-zerp-offers-style="' + href + '"]')) {
+          const hrefRaw = node.getAttribute('href') || '';
+          if (!hrefRaw) {
             return;
           }
+
+          let hrefAbs = hrefRaw;
+          try {
+            hrefAbs = new URL(hrefRaw, legacyBaseUrl).toString();
+          } catch (e) {
+            // fallback to raw href
+          }
+
+          const alreadyLinked = Array.prototype.some.call(
+            document.head.querySelectorAll('link[data-zerp-offers-style]'),
+            function (elNode) { return elNode.getAttribute('data-zerp-offers-style') === hrefAbs; }
+          );
+
+          if (alreadyLinked) {
+            return;
+          }
+
           const l = document.createElement('link');
           l.rel = 'stylesheet';
-          l.href = href;
-          l.setAttribute('data-zerp-offers-style', href);
+          l.href = hrefAbs;
+          l.setAttribute('data-zerp-offers-style', hrefAbs);
           document.head.appendChild(l);
           return;
         }
@@ -795,10 +904,17 @@ function moduleOffers() {
         if (!cssText) {
           return;
         }
-        const key = 's' + String(cssText.length) + '-' + String(cssText.slice(0, 32));
-        if (document.head.querySelector('style[data-zerp-offers-style-key="' + escapeHtml(key) + '"]')) {
+
+        const key = stableHash(cssText);
+        const hasStyle = Array.prototype.some.call(
+          document.head.querySelectorAll('style[data-zerp-offers-style-key]'),
+          function (elNode) { return elNode.getAttribute('data-zerp-offers-style-key') === key; }
+        );
+
+        if (hasStyle) {
           return;
         }
+
         const s = document.createElement('style');
         s.setAttribute('data-zerp-offers-style-key', key);
         s.textContent = cssText;
@@ -826,10 +942,9 @@ function moduleOffers() {
       window.ZQOS = window.ZQOS || {};
       window.ZQOS.forceEmbed = true;
 
-      await executeInlineScripts(scriptDoc);
+      await executeInlineScripts(scriptDoc, legacyBaseUrl);
       window.postMessage({ type: 'zq:offer:open', payload: null }, window.location.origin);
     };
-
     const mountOrLoad = async function () {
       moveHostToMount();
 
@@ -842,7 +957,7 @@ function moduleOffers() {
 
       const url = CFG.legacy_offer_panel_url || '';
       if (!url) {
-        mountPoint.innerHTML = '<div class="zerp-error">Brak URL moduÄąâ€šu ofertowego.</div>';
+        mountPoint.innerHTML = '<div class="zerp-error">Brak URL modułu ofertowego.</div>';
         return;
       }
 
@@ -853,16 +968,17 @@ function moduleOffers() {
       });
 
       if (!response.ok) {
-        throw new Error('Nie udaÄąâ€šo siĂ„â„˘ zaÄąâ€šadowaĂ„â€ˇ Panelu Ofertowego. HTTP ' + response.status);
+        throw new Error('Nie udało się załadować Panelu Ofertowego. HTTP ' + response.status);
       }
 
       const html = await response.text();
-      await injectLegacyMarkup(html);
+      const resolvedLegacyUrl = response.url || url;
+      await injectLegacyMarkup(html, resolvedLegacyUrl);
       window.__ZERP_OFFERS_LEGACY_READY = true;
     };
 
     mountOrLoad().catch(function (err) {
-      mountPoint.innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'BÄąâ€šĂ„â€¦d Äąâ€šadowania moduÄąâ€šu ofertowego.') + '</div>';
+      mountPoint.innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Błąd ładowania modułu ofertowego.') + '</div>';
     });
 
     return {
@@ -884,7 +1000,7 @@ function moduleOffers() {
   }
 
   function moduleUnavailable(label) {
-    el.moduleView.innerHTML = '<div class="zerp-card"><h3>' + escapeHtml(label || 'ModuÄąâ€š niedostĂ„â„˘pny') + '</h3><p class="zerp-muted">Brak wymaganych uprawnieÄąâ€ž lub moduÄąâ€š nie zostaÄąâ€š aktywowany.</p></div>';
+    el.moduleView.innerHTML = '<div class="zerp-card"><h3>' + escapeHtml(label || 'Moduł niedostępny') + '</h3><p class="zerp-muted">Brak wymaganych uprawnień lub moduł nie został aktywowany.</p></div>';
     return {
       unmount: function () {},
       hasUnsavedChanges: function () { return false; },
@@ -912,7 +1028,7 @@ function moduleOffers() {
 
   function showNotificationsModal() {
     if (!state.me || !permission('can_view_notifications')) {
-      mountModal('Powiadomienia', '<p>Brak uprawnieÄąâ€ž do centrum powiadomieÄąâ€ž.</p>', [{ label: 'OK' }]);
+      mountModal('Powiadomienia', '<p>Brak uprawnień do centrum powiadomień.</p>', [{ label: 'OK' }]);
       return;
     }
 
@@ -923,7 +1039,7 @@ function moduleOffers() {
 
       body.push('<div class="zerp-list" style="max-height:60dvh;overflow:auto">');
       if (!items.length) {
-        body.push('<div class="zerp-list-item">Brak powiadomieÄąâ€ž.</div>');
+        body.push('<div class="zerp-list-item">Brak powiadomień.</div>');
       }
 
       items.forEach(function (item) {
@@ -940,7 +1056,7 @@ function moduleOffers() {
 
       mountModal('Powiadomienia', body.join(''), [
         {
-          label: unread.length ? 'Oznacz nieprzeczytane jako przeczytane' : 'OdÄąâ€şwieÄąÄ˝',
+          label: unread.length ? 'Oznacz nieprzeczytane jako przeczytane' : 'Odśwież',
           className: 'zerp-btn-primary',
           onClick: function () {
             if (!unread.length) {
@@ -954,14 +1070,14 @@ function moduleOffers() {
               refreshUnreadCount();
               showNotificationsModal();
             }).catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ oznaczyĂ„â€ˇ powiadomieÄąâ€ž.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się oznaczyć powiadomień.') + '</p>', [{ label: 'OK' }]);
             });
           }
         },
         { label: 'Zamknij' }
       ]);
     }).catch(function (err) {
-      mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ pobraĂ„â€ˇ powiadomieÄąâ€ž.') + '</p>', [{ label: 'OK' }]);
+      mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się pobrać powiadomień.') + '</p>', [{ label: 'OK' }]);
     });
   }
 
@@ -1000,7 +1116,7 @@ function moduleOffers() {
 
   function moduleCommunicator() {
     if (!permission('can_view_communicator')) {
-      return moduleUnavailable('Komunikator niedostĂ„â„˘pny');
+      return moduleUnavailable('Komunikator niedostępny');
     }
 
     const local = {
@@ -1012,28 +1128,29 @@ function moduleOffers() {
       pollTimer: null,
     };
 
-        const wrap = document.createElement('div');
+    const wrap = document.createElement('div');
     wrap.className = 'zerp-module-shell zerp-module-shell-chat';
     wrap.innerHTML = '' +
       '<section class="zerp-module-head">' +
       '  <p class="zerp-kicker">Komunikator</p>' +
       '  <h2>Rozmowy operacyjne</h2>' +
-      '  <p class="zerp-module-head-lead">ProwadÄąĹź rozmowy handlowe i ofertowe w jednym roboczym oknie komunikacji.</p>' +
+      '  <p class="zerp-module-head-lead">Prowadz rozmowy handlowe i ofertowe w jednym roboczym oknie komunikacji.</p>' +
       '</section>' +
       '<div class="zerp-chat-wrap">' +
-      '  <div class="zerp-card zerp-chat-panel zerp-chat-left">' +
-      '    <div class="zerp-row"><strong>Rozmowy</strong><button type="button" class="zerp-btn" id="zerp-chat-refresh">OdÄąâ€şwieÄąÄ˝</button></div>' +
-      '    <div class="zerp-field" style="margin-top:8px"><label>Filtr statusu</label><select class="zerp-select" id="zerp-chat-filter-closed"><option value="0">Aktywne</option><option value="1">ZamkniĂ„â„˘te</option><option value="all">Wszystkie</option></select></div>' +
-      '    <div class="zerp-list zerp-chat-list" id="zerp-chat-thread-list"></div>' +
-      '  </div>' +
-      '  <div class="zerp-card zerp-chat-panel zerp-chat-right">' +
-      '    <div id="zerp-chat-detail"></div>' +
-      '  </div>' +
+      '<div class="zerp-card zerp-chat-panel zerp-chat-left">' +
+      '  <div class="zerp-row"><strong>Rozmowy</strong><button type="button" class="zerp-btn" id="zerp-chat-refresh">Odśwież</button></div>' +
+      '  <div class="zerp-field" style="margin-top:8px"><label>Filtr statusu</label><select class="zerp-select" id="zerp-chat-filter-closed"><option value="0">Aktywne</option><option value="1">Zamknięte</option><option value="all">Wszystkie</option></select></div>' +
+      '  <div class="zerp-list zerp-chat-list" id="zerp-chat-thread-list"></div>' +
+      '</div>' +
+      '<div class="zerp-card zerp-chat-panel zerp-chat-right">' +
+      '  <div id="zerp-chat-detail"></div>' +
+      '</div>' +
       '</div>';
 
     el.moduleView.innerHTML = '';
     el.moduleView.appendChild(wrap);
-const listEl = wrap.querySelector('#zerp-chat-thread-list');
+
+    const listEl = wrap.querySelector('#zerp-chat-thread-list');
     const detailEl = wrap.querySelector('#zerp-chat-detail');
     const filterClosed = wrap.querySelector('#zerp-chat-filter-closed');
 
@@ -1061,7 +1178,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
     }
 
     function renderCreateForm() {
-      const relationOptions = ['<option value="">- wybierz relacjĂ„â„˘ -</option>'];
+      const relationOptions = ['<option value="">- wybierz relację -</option>'];
       local.relations.forEach(function (r) {
         if (String(r.status || '') !== 'active') {
           return;
@@ -1078,13 +1195,13 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
         '<div class="zerp-card" style="margin-bottom:12px">' +
         '  <h3 style="margin:0 0 8px">Nowa rozmowa</h3>' +
         '  <form id="zerp-chat-create" class="zerp-form-grid cols-2">' +
-        '    <div class="zerp-field"><label>Relacja AĂ˘â€ â€ťB</label><select class="zerp-select" name="relation_id" required>' + relationOptions.join('') + '</select></div>' +
+        '    <div class="zerp-field"><label>Relacja A↔B</label><select class="zerp-select" name="relation_id" required>' + relationOptions.join('') + '</select></div>' +
         '    <div class="zerp-field"><label>Kategoria</label><select class="zerp-select" name="category_id">' + catOptions.join('') + '</select></div>' +
-        '    <div class="zerp-field"><label>Typ</label><select class="zerp-select" name="type"><option value="general">OgÄ‚Ĺ‚lna</option><option value="offer">Ofertowa</option></select></div>' +
+        '    <div class="zerp-field"><label>Typ</label><select class="zerp-select" name="type"><option value="general">Ogólna</option><option value="offer">Ofertowa</option></select></div>' +
         '    <div class="zerp-field"><label>Oferta ID (opcjonalnie)</label><input class="zerp-input" name="linked_offer_id" inputmode="numeric"></div>' +
-        '    <div class="zerp-field" style="grid-column:1/-1"><label>TytuÄąâ€š</label><input class="zerp-input" name="title" required></div>' +
-        '    <div class="zerp-field" style="grid-column:1/-1"><label>Pierwsza wiadomoÄąâ€şĂ„â€ˇ</label><textarea name="first_message" required></textarea></div>' +
-        '    <div class="zerp-actions" style="grid-column:1/-1"><button type="submit" class="zerp-btn zerp-btn-primary">UtwÄ‚Ĺ‚rz rozmowĂ„â„˘</button></div>' +
+        '    <div class="zerp-field" style="grid-column:1/-1"><label>Tytuł</label><input class="zerp-input" name="title" required></div>' +
+        '    <div class="zerp-field" style="grid-column:1/-1"><label>Pierwsza wiadomość</label><textarea name="first_message" required></textarea></div>' +
+        '    <div class="zerp-actions" style="grid-column:1/-1"><button type="submit" class="zerp-btn zerp-btn-primary">Utwórz rozmowę</button></div>' +
         '  </form>' +
         '</div>';
     }
@@ -1093,7 +1210,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
       listEl.innerHTML = '';
 
       if (!local.threads.length) {
-        listEl.innerHTML = '<div class="zerp-list-item">Brak rozmÄ‚Ĺ‚w w filtrze.</div>';
+        listEl.innerHTML = '<div class="zerp-list-item">Brak rozmów w filtrze.</div>';
         return;
       }
 
@@ -1105,7 +1222,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
           '<div class="zerp-row"><strong>' + escapeHtml(thread.title || ('Rozmowa #' + thread.id)) + '</strong><span class="zerp-muted">' + escapeHtml(thread.type || '') + '</span></div>' +
           '<div class="zerp-muted">' + escapeHtml(relationNameById(thread.relation_id)) + '</div>' +
           '<div class="zerp-row"><span class="zerp-muted">ID ' + thread.id + '</span><span class="zerp-badge" ' + ((thread.unread_count || 0) ? '' : 'style="visibility:hidden"') + '>' + Number(thread.unread_count || 0) + '</span></div>' +
-          (thread.is_closed ? '<div class="zerp-muted">ZamkniĂ„â„˘ta</div>' : '');
+          (thread.is_closed ? '<div class="zerp-muted">Zamknięta</div>' : '');
 
         btn.addEventListener('click', function () {
           local.selectedThreadId = thread.id;
@@ -1118,7 +1235,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
     }
 
     function renderDetailSkeleton() {
-      detailEl.innerHTML = renderCreateForm() + '<div class="zerp-card"><div class="zerp-muted">Wybierz rozmowĂ„â„˘ z listy po lewej stronie.</div></div>';
+      detailEl.innerHTML = renderCreateForm() + '<div class="zerp-card"><div class="zerp-muted">Wybierz rozmowę z listy po lewej stronie.</div></div>';
       bindCreateForm();
     }
 
@@ -1158,7 +1275,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
             await loadThread(local.selectedThreadId);
           }
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ utworzyĂ„â€ˇ rozmowy.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się utworzyć rozmowy.') + '</p>', [{ label: 'OK' }]);
         }
       });
     }
@@ -1168,16 +1285,16 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
       const messages = Array.isArray(thread.messages) ? thread.messages : [];
 
       const participantsHtml = participants.map(function (p) {
-        return '<span class="zerp-pill">' + escapeHtml(p.display_name || p.login || ('UÄąÄ˝ytkownik ' + p.member_id)) + (p.is_muted ? ' (wyciszony)' : '') + '</span>';
+        return '<span class="zerp-pill">' + escapeHtml(p.display_name || p.login || ('Użytkownik ' + p.member_id)) + (p.is_muted ? ' (wyciszony)' : '') + '</span>';
       }).join(' ');
 
       const messagesHtml = messages.map(function (m) {
         const atts = Array.isArray(m.attachments) ? m.attachments : [];
         const attHtml = atts.map(function (a) {
           if (a.is_expired) {
-            return '<div class="zerp-muted">Plik wygasÄąâ€š: ' + escapeHtml(a.file_name || '') + '</div>';
+            return '<div class="zerp-muted">Plik wygasł: ' + escapeHtml(a.file_name || '') + '</div>';
           }
-          return '<div><a class="zerp-link" href="' + escapeHtml(a.url || '#') + '" target="_blank" rel="noopener">' + escapeHtml(a.file_name || 'ZaÄąâ€šĂ„â€¦cznik') + '</a></div>';
+          return '<div><a class="zerp-link" href="' + escapeHtml(a.url || '#') + '" target="_blank" rel="noopener">' + escapeHtml(a.file_name || 'Załącznik') + '</a></div>';
         }).join('');
 
         return '' +
@@ -1194,16 +1311,16 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
         '  <div class="zerp-row" style="margin-bottom:8px">' +
         '    <div><h3 style="margin:0">' + escapeHtml(thread.title || ('Rozmowa #' + thread.id)) + '</h3><div class="zerp-muted">' + escapeHtml(relationNameById(thread.relation_id)) + ' | typ: ' + escapeHtml(thread.type || '') + '</div></div>' +
         '    <div class="zerp-actions">' +
-        '      <button type="button" class="zerp-btn" id="zerp-thread-mute">' + (thread.viewer_muted ? 'WÄąâ€šĂ„â€¦cz powiadomienia' : 'Wycisz') + '</button>' +
+        '      <button type="button" class="zerp-btn" id="zerp-thread-mute">' + (thread.viewer_muted ? 'Włącz powiadomienia' : 'Wycisz') + '</button>' +
         '      <button type="button" class="zerp-btn" id="zerp-thread-ping">Ping</button>' +
-        '      <button type="button" class="zerp-btn ' + (thread.is_closed ? '' : 'zerp-btn-danger') + '" id="zerp-thread-toggle-close">' + (thread.is_closed ? 'WznÄ‚Ĺ‚w' : 'Zamknij') + '</button>' +
+        '      <button type="button" class="zerp-btn ' + (thread.is_closed ? '' : 'zerp-btn-danger') + '" id="zerp-thread-toggle-close">' + (thread.is_closed ? 'Wznów' : 'Zamknij') + '</button>' +
         '    </div>' +
         '  </div>' +
         '  <div class="zerp-muted" style="margin-bottom:8px">Uczestnicy: ' + (participantsHtml || 'brak') + '</div>' +
-        '  <div class="zerp-list zerp-chat-messages" id="zerp-thread-messages">' + (messagesHtml || '<div class="zerp-list-item">Brak wiadomoÄąâ€şci.</div>') + '</div>' +
+        '  <div class="zerp-list zerp-chat-messages" id="zerp-thread-messages">' + (messagesHtml || '<div class="zerp-list-item">Brak wiadomości.</div>') + '</div>' +
         '  <form id="zerp-thread-send" class="zerp-form-grid" style="margin-top:10px">' +
-        '    <div class="zerp-field"><label>Nowa wiadomoÄąâ€şĂ„â€ˇ</label><textarea name="body" required placeholder="Wpisz wiadomoÄąâ€şĂ„â€ˇ..."></textarea></div>' +
-        '    <div class="zerp-actions"><button class="zerp-btn zerp-btn-primary" type="submit" ' + (thread.is_closed ? 'disabled' : '') + '>WyÄąâ€şlij</button></div>' +
+        '    <div class="zerp-field"><label>Nowa wiadomość</label><textarea name="body" required placeholder="Wpisz wiadomość..."></textarea></div>' +
+        '    <div class="zerp-actions"><button class="zerp-btn zerp-btn-primary" type="submit" ' + (thread.is_closed ? 'disabled' : '') + '>Wyślij</button></div>' +
         '  </form>' +
         '</div>';
 
@@ -1230,7 +1347,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
             await loadThreads();
             await refreshUnreadCount();
           } catch (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ wysÄąâ€šaĂ„â€ˇ wiadomoÄąâ€şci.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się wysłać wiadomości.') + '</p>', [{ label: 'OK' }]);
           }
         });
       }
@@ -1244,7 +1361,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
             await loadThread(thread.id);
             await loadThreads();
           } catch (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zmieniĂ„â€ˇ wyciszenia.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zmienić wyciszenia.') + '</p>', [{ label: 'OK' }]);
           }
         });
       }
@@ -1252,7 +1369,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
       const pingBtn = detailEl.querySelector('#zerp-thread-ping');
       if (pingBtn) {
         pingBtn.addEventListener('click', function () {
-          const ids = prompt('Podaj ID uÄąÄ˝ytkownikÄ‚Ĺ‚w do ping (oddzielone przecinkami):', '');
+          const ids = prompt('Podaj ID użytkowników do ping (oddzielone przecinkami):', '');
           if (ids === null) {
             return;
           }
@@ -1263,7 +1380,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
           api('chat/threads/' + thread.id + '/ping', { method: 'POST', body: { target_member_ids: parsed } })
             .then(function () { loadThread(thread.id); })
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ wysÄąâ€šaĂ„â€ˇ pingu.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się wysłać pingu.') + '</p>', [{ label: 'OK' }]);
             });
         });
       }
@@ -1272,7 +1389,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
       if (toggleCloseBtn) {
         toggleCloseBtn.addEventListener('click', function () {
           const action = thread.is_closed ? 'reopen' : 'close';
-          const reason = prompt(thread.is_closed ? 'PowÄ‚Ĺ‚d wznowienia rozmowy:' : 'PowÄ‚Ĺ‚d zamkniĂ„â„˘cia rozmowy:', '');
+          const reason = prompt(thread.is_closed ? 'Powód wznowienia rozmowy:' : 'Powód zamknięcia rozmowy:', '');
           if (reason === null) {
             return;
           }
@@ -1280,7 +1397,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
             .then(function () { return loadThread(thread.id); })
             .then(function () { return loadThreads(); })
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zmieniĂ„â€ˇ statusu rozmowy.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zmienić statusu rozmowy.') + '</p>', [{ label: 'OK' }]);
             });
         });
       }
@@ -1303,7 +1420,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
         await api('chat/threads/' + threadId + '/read', { method: 'POST', body: {} });
         await refreshUnreadCount();
       } catch (err) {
-        detailEl.innerHTML = renderCreateForm() + '<div class="zerp-card"><div class="zerp-error">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ pobraĂ„â€ˇ rozmowy.') + '</div></div>';
+        detailEl.innerHTML = renderCreateForm() + '<div class="zerp-card"><div class="zerp-error">' + escapeHtml(err.message || 'Nie udało się pobrać rozmowy.') + '</div></div>';
         bindCreateForm();
       }
     }
@@ -1329,7 +1446,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
 
     wrap.querySelector('#zerp-chat-refresh').addEventListener('click', function () {
       loadThreads().catch(function (err) {
-        mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ odÄąâ€şwieÄąÄ˝yĂ„â€ˇ rozmÄ‚Ĺ‚w.') + '</p>', [{ label: 'OK' }]);
+        mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się odświeżyć rozmów.') + '</p>', [{ label: 'OK' }]);
       });
     });
 
@@ -1340,7 +1457,7 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
     renderDetailSkeleton();
 
     Promise.all([loadLookups(), loadThreads(), refreshUnreadCount()]).catch(function (err) {
-      detailEl.innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ uruchomiĂ„â€ˇ komunikatora.') + '</div>';
+      detailEl.innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Nie udało się uruchomić komunikatora.') + '</div>';
     });
 
     local.pollTimer = setInterval(function () {
@@ -1366,28 +1483,28 @@ const listEl = wrap.querySelector('#zerp-chat-thread-list');
 
   function moduleCompanyUsers() {
     if (!permission('can_view_company_profile') && !permission('can_view_company_members')) {
-      return moduleUnavailable('Firma i UÄąÄ˝ytkownicy niedostĂ„â„˘pne');
+      return moduleUnavailable('Firma i Użytkownicy niedostępne');
     }
 
     const local = { dirty: false };
 
-        el.moduleView.innerHTML = '' +
+    el.moduleView.innerHTML = '' +
       '<div class="zerp-module-shell zerp-module-shell-company">' +
       '  <section class="zerp-module-head">' +
-      '    <p class="zerp-kicker">Firma i UÄąÄ˝ytkownicy</p>' +
+      '    <p class="zerp-kicker">Firma i Uzytkownicy</p>' +
       '    <h2>Struktura firmy i relacje</h2>' +
-      '    <p class="zerp-module-head-lead">ZarzĂ„â€¦dzaj profilem firmy, czÄąâ€šonkami zespoÄąâ€šu i relacjami biznesowymi w jednym widoku roboczym.</p>' +
+      '    <p class="zerp-module-head-lead">Zarzadzaj profilem firmy, zespolem i relacjami biznesowymi w jednym widoku roboczym.</p>' +
       '  </section>' +
-      '  <div class="zerp-grid-two">' +
-      '    <div class="zerp-card" id="zerp-company-card"><h3 style="margin-top:0">Dane firmy</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
-      '    <div class="zerp-card" id="zerp-relations-card"><h3 style="margin-top:0">Relacje AĂ˘â€ â€ťB</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
-      '  </div>' +
-      '  <div class="zerp-grid-two zerp-grid-two-stack">' +
-      '    <div class="zerp-card" id="zerp-members-card"><h3 style="margin-top:0">UÄąÄ˝ytkownicy firmy</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
-      '    <div class="zerp-card" id="zerp-joins-card"><h3 style="margin-top:0">Wnioski o doÄąâ€šĂ„â€¦czenie</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
-      '  </div>' +
+      '<div class="zerp-grid-two">' +
+      '  <div class="zerp-card" id="zerp-company-card"><h3 style="margin-top:0">Dane firmy</h3><div class="zerp-muted">Ladowanie...</div></div>' +
+      '  <div class="zerp-card" id="zerp-relations-card"><h3 style="margin-top:0">Relacje A↔B</h3><div class="zerp-muted">Ladowanie...</div></div>' +
+      '</div>' +
+      '<div class="zerp-grid-two zerp-grid-two-stack">' +
+      '  <div class="zerp-card" id="zerp-members-card"><h3 style="margin-top:0">Uzytkownicy firmy</h3><div class="zerp-muted">Ladowanie...</div></div>' +
+      '  <div class="zerp-card" id="zerp-joins-card"><h3 style="margin-top:0">Wnioski o dolaczenie</h3><div class="zerp-muted">Ladowanie...</div></div>' +
+      '</div>' +
       '</div>';
-const companyEl = document.getElementById('zerp-company-card');
+    const companyEl = document.getElementById('zerp-company-card');
     const membersEl = document.getElementById('zerp-members-card');
     const relationsEl = document.getElementById('zerp-relations-card');
     const joinsEl = document.getElementById('zerp-joins-card');
@@ -1416,7 +1533,7 @@ const companyEl = document.getElementById('zerp-company-card');
         '  <div class="zerp-field"><label>WWW</label><input class="zerp-input" name="www" value="' + escapeHtml(company.www || '') + '"></div>' +
         '  <div class="zerp-field"><label>Status</label><select class="zerp-select" name="status"><option value="active" ' + (company.status === 'active' ? 'selected' : '') + '>Aktywna</option><option value="inactive" ' + (company.status === 'inactive' ? 'selected' : '') + '>Nieaktywna</option></select></div>' +
         '  <div class="zerp-row" style="grid-column:1/-1"><div class="zerp-muted">Join code: <strong>' + escapeHtml(company.join_code || '-') + '</strong></div><button type="button" class="zerp-btn" id="zerp-regenerate-join">Regeneruj</button></div>' +
-        '  <div class="zerp-actions" style="grid-column:1/-1"><button type="submit" class="zerp-btn zerp-btn-primary">Zapisz firmĂ„â„˘</button></div>' +
+        '  <div class="zerp-actions" style="grid-column:1/-1"><button type="submit" class="zerp-btn zerp-btn-primary">Zapisz firmę</button></div>' +
         '</form>';
 
       const form = companyEl.querySelector('#zerp-company-form');
@@ -1430,7 +1547,7 @@ const companyEl = document.getElementById('zerp-company-card');
           local.dirty = false;
           await loadCompany();
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zapisaĂ„â€ˇ danych firmy.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zapisać danych firmy.') + '</p>', [{ label: 'OK' }]);
         }
       });
 
@@ -1440,14 +1557,14 @@ const companyEl = document.getElementById('zerp-company-card');
           await api('companies/me/join-code/regenerate', { method: 'POST', body: {} });
           await loadCompany();
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zregenerowaĂ„â€ˇ join code.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zregenerować join code.') + '</p>', [{ label: 'OK' }]);
         }
       });
     }
 
     async function loadMembers() {
       if (!permission('can_view_company_members')) {
-        membersEl.innerHTML = '<h3 style="margin-top:0">UÄąÄ˝ytkownicy firmy</h3><div class="zerp-muted">Brak uprawnieÄąâ€ž do podglĂ„â€¦du uÄąÄ˝ytkownikÄ‚Ĺ‚w.</div>';
+        membersEl.innerHTML = '<h3 style="margin-top:0">Użytkownicy firmy</h3><div class="zerp-muted">Brak uprawnień do podglądu użytkowników.</div>';
         return;
       }
 
@@ -1460,7 +1577,7 @@ const companyEl = document.getElementById('zerp-company-card');
           '  <div class="zerp-row"><strong>' + escapeHtml((m.first_name || '') + ' ' + (m.last_name || '')) + '</strong><span class="zerp-muted">' + escapeHtml(m.role || '') + (m.is_owner ? ' (owner)' : '') + '</span></div>' +
           '  <div class="zerp-muted">' + escapeHtml(m.login || '') + ' | ' + escapeHtml(m.email || '') + ' | status: ' + escapeHtml(m.status || '') + '</div>' +
           '  <div class="zerp-actions" style="margin-top:8px">' +
-          (m.status === 'active' && !m.is_owner ? '<button class="zerp-btn" data-member-suspend="' + m.id + '">ZawieÄąâ€ş</button>' : '') +
+          (m.status === 'active' && !m.is_owner ? '<button class="zerp-btn" data-member-suspend="' + m.id + '">Zawieś</button>' : '') +
           (m.status !== 'active' && !m.is_owner ? '<button class="zerp-btn" data-member-reactivate="' + m.id + '">Aktywuj</button>' : '') +
           (!m.is_owner ? '<button class="zerp-btn" data-member-edit="' + m.id + '">Edytuj</button>' : '') +
           '  </div>' +
@@ -1468,17 +1585,17 @@ const companyEl = document.getElementById('zerp-company-card');
       }).join('');
 
       membersEl.innerHTML = '' +
-        '<h3 style="margin-top:0">UÄąÄ˝ytkownicy firmy</h3>' +
+        '<h3 style="margin-top:0">Użytkownicy firmy</h3>' +
         '<form id="zerp-member-create" class="zerp-form-grid cols-2" style="margin-bottom:10px">' +
-        '  <div class="zerp-field"><label>ImiĂ„â„˘</label><input class="zerp-input" name="first_name" required></div>' +
+        '  <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>' +
         '  <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>' +
         '  <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" required></div>' +
         '  <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone"></div>' +
         '  <div class="zerp-field"><label>Rola</label><select class="zerp-select" name="role"><option value="user">user</option><option value="manager">manager</option></select></div>' +
-        '  <div class="zerp-field"><label>HasÄąâ€šo</label><input class="zerp-input" name="password" type="password" minlength="8" required></div>' +
-        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn zerp-btn-primary" type="submit">Dodaj uÄąÄ˝ytkownika</button></div>' +
+        '  <div class="zerp-field"><label>Hasło</label><input class="zerp-input" name="password" type="password" minlength="8" required></div>' +
+        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn zerp-btn-primary" type="submit">Dodaj użytkownika</button></div>' +
         '</form>' +
-        '<div class="zerp-list">' + (rows || '<div class="zerp-list-item">Brak uÄąÄ˝ytkownikÄ‚Ĺ‚w.</div>') + '</div>';
+        '<div class="zerp-list">' + (rows || '<div class="zerp-list-item">Brak użytkowników.</div>') + '</div>';
 
       const createForm = membersEl.querySelector('#zerp-member-create');
       createForm.addEventListener('input', markDirty);
@@ -1490,10 +1607,10 @@ const companyEl = document.getElementById('zerp-company-card');
           local.dirty = false;
           await loadMembers();
           if (res && res.generated_login) {
-            mountModal('Utworzono uÄąÄ˝ytkownika', '<p>Login: <strong>' + escapeHtml(res.generated_login) + '</strong></p><p>HasÄąâ€šo: <strong>' + escapeHtml(res.generated_password || '') + '</strong></p>', [{ label: 'OK' }]);
+            mountModal('Utworzono użytkownika', '<p>Login: <strong>' + escapeHtml(res.generated_login) + '</strong></p><p>Hasło: <strong>' + escapeHtml(res.generated_password || '') + '</strong></p>', [{ label: 'OK' }]);
           }
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ utworzyĂ„â€ˇ uÄąÄ˝ytkownika.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się utworzyć użytkownika.') + '</p>', [{ label: 'OK' }]);
         }
       });
 
@@ -1501,7 +1618,7 @@ const companyEl = document.getElementById('zerp-company-card');
         btn.addEventListener('click', function () {
           const id = Number(btn.getAttribute('data-member-suspend'));
           api('members/' + id + '/suspend', { method: 'POST', body: {} }).then(loadMembers).catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zawiesiĂ„â€ˇ uÄąÄ˝ytkownika.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zawiesić użytkownika.') + '</p>', [{ label: 'OK' }]);
           });
         });
       });
@@ -1510,7 +1627,7 @@ const companyEl = document.getElementById('zerp-company-card');
         btn.addEventListener('click', function () {
           const id = Number(btn.getAttribute('data-member-reactivate'));
           api('members/' + id + '/reactivate', { method: 'POST', body: {} }).then(loadMembers).catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ aktywowaĂ„â€ˇ uÄąÄ˝ytkownika.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się aktywować użytkownika.') + '</p>', [{ label: 'OK' }]);
           });
         });
       });
@@ -1526,16 +1643,16 @@ const companyEl = document.getElementById('zerp-company-card');
           const html = '' +
             '<form id="zerp-member-edit-form" class="zerp-form-grid cols-2">' +
             '  <input type="hidden" name="id" value="' + id + '">' +
-            '  <div class="zerp-field"><label>ImiĂ„â„˘</label><input class="zerp-input" name="first_name" value="' + escapeHtml(target.first_name || '') + '"></div>' +
+            '  <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" value="' + escapeHtml(target.first_name || '') + '"></div>' +
             '  <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" value="' + escapeHtml(target.last_name || '') + '"></div>' +
             '  <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" value="' + escapeHtml(target.email || '') + '"></div>' +
             '  <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone" value="' + escapeHtml(target.phone || '') + '"></div>' +
             '  <div class="zerp-field"><label>Rola</label><select class="zerp-select" name="role"><option value="user" ' + (target.role === 'user' ? 'selected' : '') + '>user</option><option value="manager" ' + (target.role === 'manager' ? 'selected' : '') + '>manager</option></select></div>' +
             '  <div class="zerp-field"><label>Status</label><select class="zerp-select" name="status"><option value="active" ' + (target.status === 'active' ? 'selected' : '') + '>active</option><option value="suspended" ' + (target.status === 'suspended' ? 'selected' : '') + '>suspended</option></select></div>' +
-            '  <div class="zerp-field" style="grid-column:1/-1"><label>Nowe hasÄąâ€šo (opcjonalnie)</label><input class="zerp-input" name="password" type="password"></div>' +
+            '  <div class="zerp-field" style="grid-column:1/-1"><label>Nowe hasło (opcjonalnie)</label><input class="zerp-input" name="password" type="password"></div>' +
             '</form>';
 
-          mountModal('Edycja uÄąÄ˝ytkownika', html, [
+          mountModal('Edycja użytkownika', html, [
             {
               label: 'Zapisz',
               className: 'zerp-btn-primary',
@@ -1548,7 +1665,7 @@ const companyEl = document.getElementById('zerp-company-card');
                 api('members/' + id, { method: 'POST', body: payload })
                   .then(function () { return loadMembers(); })
                   .catch(function (err) {
-                    mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaktualizowaĂ„â€ˇ uÄąÄ˝ytkownika.') + '</p>', [{ label: 'OK' }]);
+                    mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zaktualizować użytkownika.') + '</p>', [{ label: 'OK' }]);
                   });
               }
             },
@@ -1560,7 +1677,7 @@ const companyEl = document.getElementById('zerp-company-card');
 
     async function loadJoinRequests() {
       if (!permission('can_view_company_members')) {
-        joinsEl.innerHTML = '<h3 style="margin-top:0">Wnioski o doÄąâ€šĂ„â€¦czenie</h3><div class="zerp-muted">Brak uprawnieÄąâ€ž.</div>';
+        joinsEl.innerHTML = '<h3 style="margin-top:0">Wnioski o dołączenie</h3><div class="zerp-muted">Brak uprawnień.</div>';
         return;
       }
 
@@ -1568,17 +1685,17 @@ const companyEl = document.getElementById('zerp-company-card');
       const items = result && Array.isArray(result.items) ? result.items : [];
 
       joinsEl.innerHTML = '' +
-        '<h3 style="margin-top:0">Wnioski o doÄąâ€šĂ„â€¦czenie</h3>' +
+        '<h3 style="margin-top:0">Wnioski o dołączenie</h3>' +
         '<div class="zerp-list">' +
         (items.map(function (it) {
           return '<div class="zerp-list-item">' +
             '<div class="zerp-row"><strong>' + escapeHtml((it.first_name || '') + ' ' + (it.last_name || '')) + '</strong><span class="zerp-muted">' + escapeHtml(it.status || '') + '</span></div>' +
             '<div class="zerp-muted">' + escapeHtml(it.email || '') + '</div>' +
             '<div class="zerp-actions" style="margin-top:8px">' +
-            (it.status === 'pending' ? '<button class="zerp-btn zerp-btn-primary" data-join-approve="' + it.id + '">Akceptuj</button><button class="zerp-btn" data-join-reject="' + it.id + '">OdrzuĂ„â€ˇ</button>' : '') +
+            (it.status === 'pending' ? '<button class="zerp-btn zerp-btn-primary" data-join-approve="' + it.id + '">Akceptuj</button><button class="zerp-btn" data-join-reject="' + it.id + '">Odrzuć</button>' : '') +
             '</div>' +
           '</div>';
-        }).join('') || '<div class="zerp-list-item">Brak wnioskÄ‚Ĺ‚w.</div>') +
+        }).join('') || '<div class="zerp-list-item">Brak wniosków.</div>') +
         '</div>';
 
       joinsEl.querySelectorAll('[data-join-approve]').forEach(function (btn) {
@@ -1587,7 +1704,7 @@ const companyEl = document.getElementById('zerp-company-card');
           api('auth/join-requests/' + id + '/approve', { method: 'POST', body: {} })
             .then(function () { return Promise.all([loadJoinRequests(), loadMembers()]); })
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaakceptowaĂ„â€ˇ wniosku.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zaakceptować wniosku.') + '</p>', [{ label: 'OK' }]);
             });
         });
       });
@@ -1595,14 +1712,14 @@ const companyEl = document.getElementById('zerp-company-card');
       joinsEl.querySelectorAll('[data-join-reject]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           const id = Number(btn.getAttribute('data-join-reject'));
-          const reason = prompt('PowÄ‚Ĺ‚d odrzucenia:', '');
+          const reason = prompt('Powód odrzucenia:', '');
           if (reason === null) {
             return;
           }
           api('auth/join-requests/' + id + '/reject', { method: 'POST', body: { reason: reason } })
             .then(loadJoinRequests)
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ odrzuciĂ„â€ˇ wniosku.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się odrzucić wniosku.') + '</p>', [{ label: 'OK' }]);
             });
         });
       });
@@ -1610,7 +1727,7 @@ const companyEl = document.getElementById('zerp-company-card');
 
     async function loadRelations() {
       if (!permission('can_manage_company_relations')) {
-        relationsEl.innerHTML = '<h3 style="margin-top:0">Relacje AĂ˘â€ â€ťB</h3><div class="zerp-muted">Brak uprawnieÄąâ€ž do relacji.</div>';
+        relationsEl.innerHTML = '<h3 style="margin-top:0">Relacje A↔B</h3><div class="zerp-muted">Brak uprawnień do relacji.</div>';
         return;
       }
 
@@ -1618,19 +1735,19 @@ const companyEl = document.getElementById('zerp-company-card');
       const rels = relRes && Array.isArray(relRes.items) ? relRes.items : [];
 
       relationsEl.innerHTML = '' +
-        '<h3 style="margin-top:0">Relacje AĂ˘â€ â€ťB</h3>' +
+        '<h3 style="margin-top:0">Relacje A↔B</h3>' +
         '<form id="zerp-relation-invite" class="zerp-form-grid cols-2" style="margin-bottom:10px">' +
         '  <div class="zerp-field"><label>ID firmy docelowej</label><input class="zerp-input" name="target_company_id" inputmode="numeric" required></div>' +
         '  <div class="zerp-field"><label>Limit rabatu strony docelowej [%]</label><input class="zerp-input" name="max_discount_from_target" value="0" inputmode="decimal"></div>' +
-        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn zerp-btn-primary" type="submit">WyÄąâ€şlij zaproszenie</button></div>' +
+        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn zerp-btn-primary" type="submit">Wyślij zaproszenie</button></div>' +
         '</form>' +
         '<div class="zerp-list">' +
         (rels.map(function (r) {
           return '<div class="zerp-list-item">' +
             '<div class="zerp-row"><strong>' + escapeHtml(r.other_company_name || ('Firma #' + r.other_company_id)) + '</strong><span class="zerp-muted">' + escapeHtml(r.status || '') + '</span></div>' +
-            '<div class="zerp-muted">Relacja #' + r.id + ' | limity: AĂ˘â€ â€™B ' + escapeHtml(String(r.max_discount_a_to_b || 0)) + '% | BĂ˘â€ â€™A ' + escapeHtml(String(r.max_discount_b_to_a || 0)) + '%</div>' +
+            '<div class="zerp-muted">Relacja #' + r.id + ' | limity: A→B ' + escapeHtml(String(r.max_discount_a_to_b || 0)) + '% | B→A ' + escapeHtml(String(r.max_discount_b_to_a || 0)) + '%</div>' +
             '<div class="zerp-actions" style="margin-top:8px">' +
-            (r.status === 'pending' ? '<button class="zerp-btn zerp-btn-primary" data-rel-accept="' + r.id + '">Akceptuj</button><button class="zerp-btn" data-rel-reject="' + r.id + '">OdrzuĂ„â€ˇ</button>' : '') +
+            (r.status === 'pending' ? '<button class="zerp-btn zerp-btn-primary" data-rel-accept="' + r.id + '">Akceptuj</button><button class="zerp-btn" data-rel-reject="' + r.id + '">Odrzuć</button>' : '') +
             '</div>' +
           '</div>';
         }).join('') || '<div class="zerp-list-item">Brak relacji.</div>') +
@@ -1646,7 +1763,7 @@ const companyEl = document.getElementById('zerp-company-card');
           local.dirty = false;
           await loadRelations();
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ wysÄąâ€šaĂ„â€ˇ zaproszenia.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się wysłać zaproszenia.') + '</p>', [{ label: 'OK' }]);
         }
       });
 
@@ -1660,7 +1777,7 @@ const companyEl = document.getElementById('zerp-company-card');
           api('relations/' + id + '/accept', { method: 'POST', body: { max_discount_for_other_side: Number(maxD) || 0 } })
             .then(loadRelations)
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaakceptowaĂ„â€ˇ relacji.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zaakceptować relacji.') + '</p>', [{ label: 'OK' }]);
             });
         });
       });
@@ -1668,21 +1785,21 @@ const companyEl = document.getElementById('zerp-company-card');
       relationsEl.querySelectorAll('[data-rel-reject]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           const id = Number(btn.getAttribute('data-rel-reject'));
-          const reason = prompt('PowÄ‚Ĺ‚d odrzucenia relacji:', '');
+          const reason = prompt('Powód odrzucenia relacji:', '');
           if (reason === null) {
             return;
           }
           api('relations/' + id + '/reject', { method: 'POST', body: { reason: reason } })
             .then(loadRelations)
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ odrzuciĂ„â€ˇ relacji.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się odrzucić relacji.') + '</p>', [{ label: 'OK' }]);
             });
         });
       });
     }
 
     Promise.all([loadCompany(), loadMembers(), loadJoinRequests(), loadRelations()]).catch(function (err) {
-      el.moduleView.insertAdjacentHTML('afterbegin', '<div class="zerp-error" style="margin-bottom:10px">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaÄąâ€šadowaĂ„â€ˇ moduÄąâ€šu.') + '</div>');
+      el.moduleView.insertAdjacentHTML('afterbegin', '<div class="zerp-error" style="margin-bottom:10px">' + escapeHtml(err.message || 'Nie udało się załadować modułu.') + '</div>');
     });
 
     return {
@@ -1695,25 +1812,25 @@ const companyEl = document.getElementById('zerp-company-card');
 
   function moduleCatalog() {
     if (!permission('can_view_sources')) {
-      return moduleUnavailable('Biblioteka ProduktÄ‚Ĺ‚w niedostĂ„â„˘pna');
+      return moduleUnavailable('Biblioteka Produktów niedostępna');
     }
 
     const local = { dirty: false, relations: [] };
 
-        el.moduleView.innerHTML = '' +
+    el.moduleView.innerHTML = '' +
       '<div class="zerp-module-shell zerp-module-shell-catalog">' +
       '  <section class="zerp-module-head">' +
-      '    <p class="zerp-kicker">Biblioteka produktÄ‚Ĺ‚w</p>' +
-      '    <h2>ÄąÄ…rÄ‚Ĺ‚dÄąâ€ša i katalog firmowy</h2>' +
-      '    <p class="zerp-module-head-lead">PoÄąâ€šĂ„â€¦cz dane Google Sheets i lokalnĂ„â€¦ bibliotekĂ„â„˘ produktÄ‚Ĺ‚w w jednym, spÄ‚Ĺ‚jnym widoku roboczym.</p>' +
+      '    <p class="zerp-kicker">Biblioteka produktow</p>' +
+      '    <h2>Zrodla i katalog firmowy</h2>' +
+      '    <p class="zerp-module-head-lead">Polacz dane Google Sheets i lokalna biblioteke produktow w jednym widoku roboczym.</p>' +
       '  </section>' +
       '  <div class="zerp-grid-two">' +
-      '    <div class="zerp-card" id="zerp-source-card"><h3 style="margin-top:0">ÄąÄ…rÄ‚Ĺ‚dÄąâ€šo Google Sheets</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
-      '    <div class="zerp-card" id="zerp-local-catalog-card"><h3 style="margin-top:0">Katalog lokalny</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
+      '    <div class="zerp-card" id="zerp-source-card"><h3 style="margin-top:0">Zrodlo Google Sheets</h3><div class="zerp-muted">Ladowanie...</div></div>' +
+      '    <div class="zerp-card" id="zerp-local-catalog-card"><h3 style="margin-top:0">Katalog lokalny</h3><div class="zerp-muted">Ladowanie...</div></div>' +
       '  </div>' +
-      '  <div class="zerp-card" id="zerp-merged-products-card"><h3 style="margin-top:0">Scalona lista produktÄ‚Ĺ‚w</h3><div class="zerp-muted">ÄąÂadowanie...</div></div>' +
+      '  <div class="zerp-card" id="zerp-merged-products-card"><h3 style="margin-top:0">Scalona lista produktow</h3><div class="zerp-muted">Ladowanie...</div></div>' +
       '</div>';
-const sourceEl = document.getElementById('zerp-source-card');
+    const sourceEl = document.getElementById('zerp-source-card');
     const localEl = document.getElementById('zerp-local-catalog-card');
     const mergedEl = document.getElementById('zerp-merged-products-card');
 
@@ -1728,18 +1845,18 @@ const sourceEl = document.getElementById('zerp-source-card');
       }).join('\n');
 
       sourceEl.innerHTML = '' +
-        '<h3 style="margin-top:0">ÄąÄ…rÄ‚Ĺ‚dÄąâ€šo Google Sheets</h3>' +
+        '<h3 style="margin-top:0">Źródło Google Sheets</h3>' +
         '<form id="zerp-source-form" class="zerp-form-grid">' +
         '  <div class="zerp-field"><label>Sheet public ID</label><input class="zerp-input" name="sheet_pub_id" value="' + escapeHtml((source && source.sheet_pub_id) || '') + '" required></div>' +
         '  <div class="zerp-field"><label>Taby (format: nazwa:gid, jeden wiersz)</label><textarea name="tabs">' + escapeHtml(tabsText) + '</textarea></div>' +
-        '  <div class="zerp-field"><label>InterwaÄąâ€š sync [min]</label><select class="zerp-select" name="sync_interval_minutes">' +
+        '  <div class="zerp-field"><label>Interwał sync [min]</label><select class="zerp-select" name="sync_interval_minutes">' +
         '    <option value="1" ' + (source && Number(source.sync_interval_minutes) === 1 ? 'selected' : '') + '>1</option>' +
         '    <option value="5" ' + (source && Number(source.sync_interval_minutes) === 5 ? 'selected' : '') + '>5</option>' +
         '    <option value="10" ' + ((source && Number(source.sync_interval_minutes) === 10) || !source ? 'selected' : '') + '>10</option>' +
         '    <option value="15" ' + (source && Number(source.sync_interval_minutes) === 15 ? 'selected' : '') + '>15</option>' +
         '  </select></div>' +
         '  <div class="zerp-field"><label>Sync aktywny</label><select class="zerp-select" name="sync_enabled"><option value="1" ' + ((source && Number(source.sync_enabled) === 1) || !source ? 'selected' : '') + '>Tak</option><option value="0" ' + (source && Number(source.sync_enabled) === 0 ? 'selected' : '') + '>Nie</option></select></div>' +
-        '  <div class="zerp-actions"><button type="submit" class="zerp-btn zerp-btn-primary">Zapisz ÄąĹźrÄ‚Ĺ‚dÄąâ€šo</button><button type="button" class="zerp-btn" id="zerp-source-force-sync">WymuÄąâ€ş sync</button></div>' +
+        '  <div class="zerp-actions"><button type="submit" class="zerp-btn zerp-btn-primary">Zapisz źródło</button><button type="button" class="zerp-btn" id="zerp-source-force-sync">Wymuś sync</button></div>' +
         '</form>' +
         '<div class="zerp-muted" style="margin-top:8px">Ostatni sync: ' + escapeHtml((source && source.last_sync_at) || '-') + ' | status: ' + ((source && source.last_sync_ok) ? 'OK' : 'brak/err') + '</div>';
 
@@ -1772,7 +1889,7 @@ const sourceEl = document.getElementById('zerp-source-card');
           await loadSource();
           await loadMerged();
         } catch (err) {
-          mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zapisaĂ„â€ˇ ÄąĹźrÄ‚Ĺ‚dÄąâ€ša Google.') + '</p>', [{ label: 'OK' }]);
+          mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zapisać źródła Google.') + '</p>', [{ label: 'OK' }]);
         }
       });
 
@@ -1780,7 +1897,7 @@ const sourceEl = document.getElementById('zerp-source-card');
         api('sources/google/sync', { method: 'POST', body: {} })
           .then(function () { return Promise.all([loadSource(), loadMerged()]); })
           .catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ uruchomiĂ„â€ˇ synchronizacji.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się uruchomić synchronizacji.') + '</p>', [{ label: 'OK' }]);
           });
       });
     }
@@ -1806,7 +1923,7 @@ const sourceEl = document.getElementById('zerp-source-card');
         '<form id="zerp-category-form" class="zerp-form-grid cols-2">' +
         '  <div class="zerp-field"><label>Nowa kategoria</label><input class="zerp-input" name="name" required></div>' +
         '  <div class="zerp-field"><label>Sortowanie</label><input class="zerp-input" name="sort_order" value="0" inputmode="numeric"></div>' +
-        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn" type="submit">Dodaj kategoriĂ„â„˘</button></div>' +
+        '  <div class="zerp-actions" style="grid-column:1/-1"><button class="zerp-btn" type="submit">Dodaj kategorię</button></div>' +
         '</form>' +
         '<form id="zerp-item-form" class="zerp-form-grid cols-2" style="margin-top:10px">' +
         '  <div class="zerp-field"><label>Nazwa produktu</label><input class="zerp-input" name="name" required></div>' +
@@ -1843,7 +1960,7 @@ const sourceEl = document.getElementById('zerp-source-card');
           .then(function () { local.dirty = false; return loadLocalCatalog(); })
           .then(loadMerged)
           .catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ dodaĂ„â€ˇ kategorii.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się dodać kategorii.') + '</p>', [{ label: 'OK' }]);
           });
       });
 
@@ -1856,7 +1973,7 @@ const sourceEl = document.getElementById('zerp-source-card');
           .then(function () { local.dirty = false; return loadLocalCatalog(); })
           .then(loadMerged)
           .catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ dodaĂ„â€ˇ produktu.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się dodać produktu.') + '</p>', [{ label: 'OK' }]);
           });
       });
 
@@ -1869,7 +1986,7 @@ const sourceEl = document.getElementById('zerp-source-card');
           .then(function () { local.dirty = false; return loadLocalCatalog(); })
           .then(loadMerged)
           .catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ dodaĂ„â€ˇ wariantu.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się dodać wariantu.') + '</p>', [{ label: 'OK' }]);
           });
       });
 
@@ -1880,7 +1997,7 @@ const sourceEl = document.getElementById('zerp-source-card');
             .then(function () { return loadLocalCatalog(); })
             .then(loadMerged)
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zarchiwizowaĂ„â€ˇ produktu.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się zarchiwizować produktu.') + '</p>', [{ label: 'OK' }]);
             });
         });
       });
@@ -1906,9 +2023,9 @@ const sourceEl = document.getElementById('zerp-source-card');
       });
 
       mergedEl.innerHTML = '' +
-        '<h3 style="margin-top:0">Scalona lista produktÄ‚Ĺ‚w</h3>' +
-        '<div class="zerp-row" style="margin-bottom:8px"><div class="zerp-field" style="min-width:260px"><label>Kontekst danych</label><select class="zerp-select" id="zerp-merged-context">' + contextOptions.join('') + '</select></div><button class="zerp-btn" id="zerp-merged-refresh">OdÄąâ€şwieÄąÄ˝</button></div>' +
-        '<div id="zerp-merged-table-wrap" class="zerp-list"><div class="zerp-list-item">Wybierz kontekst i odÄąâ€şwieÄąÄ˝.</div></div>';
+        '<h3 style="margin-top:0">Scalona lista produktów</h3>' +
+        '<div class="zerp-row" style="margin-bottom:8px"><div class="zerp-field" style="min-width:260px"><label>Kontekst danych</label><select class="zerp-select" id="zerp-merged-context">' + contextOptions.join('') + '</select></div><button class="zerp-btn" id="zerp-merged-refresh">Odśwież</button></div>' +
+        '<div id="zerp-merged-table-wrap" class="zerp-list"><div class="zerp-list-item">Wybierz kontekst i odśwież.</div></div>';
 
       async function fetchMerged() {
         const sel = mergedEl.querySelector('#zerp-merged-context');
@@ -1926,12 +2043,12 @@ const sourceEl = document.getElementById('zerp-source-card');
           '</div>';
         }).join('');
 
-        mergedEl.querySelector('#zerp-merged-table-wrap').innerHTML = rows || '<div class="zerp-list-item">Brak produktÄ‚Ĺ‚w dla wybranego kontekstu.</div>';
+        mergedEl.querySelector('#zerp-merged-table-wrap').innerHTML = rows || '<div class="zerp-list-item">Brak produktów dla wybranego kontekstu.</div>';
       }
 
       mergedEl.querySelector('#zerp-merged-refresh').addEventListener('click', function () {
         fetchMerged().catch(function (err) {
-          mergedEl.querySelector('#zerp-merged-table-wrap').innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ pobraĂ„â€ˇ listy produktÄ‚Ĺ‚w.') + '</div>';
+          mergedEl.querySelector('#zerp-merged-table-wrap').innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Nie udało się pobrać listy produktów.') + '</div>';
         });
       });
 
@@ -1943,7 +2060,7 @@ const sourceEl = document.getElementById('zerp-source-card');
     }
 
     Promise.all([loadSource(), loadLocalCatalog(), loadMerged()]).catch(function (err) {
-      el.moduleView.insertAdjacentHTML('afterbegin', '<div class="zerp-error" style="margin-bottom:10px">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaÄąâ€šadowaĂ„â€ˇ moduÄąâ€šu katalogu.') + '</div>');
+      el.moduleView.insertAdjacentHTML('afterbegin', '<div class="zerp-error" style="margin-bottom:10px">' + escapeHtml(err.message || 'Nie udało się załadować modułu katalogu.') + '</div>');
     });
 
     return {
@@ -1955,7 +2072,7 @@ const sourceEl = document.getElementById('zerp-source-card');
   }
   function moduleNotifications() {
     if (!permission('can_view_notifications')) {
-      return moduleUnavailable('Powiadomienia niedostĂ„â„˘pne');
+      return moduleUnavailable('Powiadomienia niedostępne');
     }
 
     const local = { dirty: false };
@@ -1965,15 +2082,15 @@ const sourceEl = document.getElementById('zerp-source-card');
       const items = result && Array.isArray(result.items) ? result.items : [];
       const unread = items.filter(function (x) { return !x.is_read; });
 
-            el.moduleView.innerHTML = '' +
+      el.moduleView.innerHTML = '' +
         '<div class="zerp-module-shell zerp-module-shell-notifications">' +
         '  <section class="zerp-module-head">' +
         '    <p class="zerp-kicker">Powiadomienia</p>' +
-        '    <h2>Centrum zdarzeÄąâ€ž</h2>' +
-        '    <p class="zerp-module-head-lead">ÄąĹˇledÄąĹź najwaÄąÄ˝niejsze zdarzenia i reaguj na nowe wiadomoÄąâ€şci, pingi i zmiany statusÄ‚Ĺ‚w.</p>' +
+        '    <h2>Centrum zdarzen</h2>' +
+        '    <p class="zerp-module-head-lead">Sledz najwazniejsze zdarzenia i reaguj na nowe wiadomosci, pingi i zmiany statusow.</p>' +
         '  </section>' +
         '  <div class="zerp-card zerp-notification-card">' +
-        '    <div class="zerp-row zerp-notification-toolbar" style="margin-bottom:10px"><h3 style="margin:0">Powiadomienia</h3><div class="zerp-actions"><button class="zerp-btn" id="zerp-notif-refresh">OdÄąâ€şwieÄąÄ˝</button><button class="zerp-btn zerp-btn-primary" id="zerp-notif-mark-read" ' + (unread.length ? '' : 'disabled') + '>Oznacz nieprzeczytane jako przeczytane</button></div></div>' +
+        '    <div class="zerp-row zerp-notification-toolbar" style="margin-bottom:10px"><h3 style="margin:0">Powiadomienia</h3><div class="zerp-actions"><button class="zerp-btn" id="zerp-notif-refresh">Odswiez</button><button class="zerp-btn zerp-btn-primary" id="zerp-notif-mark-read" ' + (unread.length ? '' : 'disabled') + '>Oznacz nieprzeczytane jako przeczytane</button></div></div>' +
         '    <div class="zerp-list zerp-notification-list">' +
         (items.map(function (item) {
           return '<div class="zerp-list-item">' +
@@ -1981,15 +2098,15 @@ const sourceEl = document.getElementById('zerp-source-card');
             '<div class="zerp-muted">' + escapeHtml(item.notification_type || '') + (item.is_read ? '' : ' | nieprzeczytane') + '</div>' +
             '<div style="margin-top:6px">' + escapeHtml(item.body || '') + '</div>' +
           '</div>';
-        }).join('') || '<div class="zerp-list-item">Brak powiadomieÄąâ€ž.</div>') +
+        }).join('') || '<div class="zerp-list-item">Brak powiadomien.</div>') +
         '    </div>' +
         '  </div>' +
         '</div>';
-const refreshBtn = document.getElementById('zerp-notif-refresh');
+      const refreshBtn = document.getElementById('zerp-notif-refresh');
       if (refreshBtn) {
         refreshBtn.addEventListener('click', function () {
           render().catch(function (err) {
-            mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ odÄąâ€şwieÄąÄ˝yĂ„â€ˇ powiadomieÄąâ€ž.') + '</p>', [{ label: 'OK' }]);
+            mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się odświeżyć powiadomień.') + '</p>', [{ label: 'OK' }]);
           });
         });
       }
@@ -2003,7 +2120,7 @@ const refreshBtn = document.getElementById('zerp-notif-refresh');
           api('notifications/read', { method: 'POST', body: { ids: unread.map(function (x) { return x.id; }) } })
             .then(function () { return Promise.all([render(), refreshUnreadCount()]); })
             .catch(function (err) {
-              mountModal('BÄąâ€šĂ„â€¦d', '<p>' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ oznaczyĂ„â€ˇ powiadomieÄąâ€ž.') + '</p>', [{ label: 'OK' }]);
+              mountModal('Błąd', '<p>' + escapeHtml(err.message || 'Nie udało się oznaczyć powiadomień.') + '</p>', [{ label: 'OK' }]);
             });
         });
       }
@@ -2012,7 +2129,7 @@ const refreshBtn = document.getElementById('zerp-notif-refresh');
     }
 
     render().catch(function (err) {
-      el.moduleView.innerHTML = '<div class="zerp-card"><div class="zerp-error">' + escapeHtml(err.message || 'Nie udaÄąâ€šo siĂ„â„˘ zaÄąâ€šadowaĂ„â€ˇ powiadomieÄąâ€ž.') + '</div></div>';
+      el.moduleView.innerHTML = '<div class="zerp-card"><div class="zerp-error">' + escapeHtml(err.message || 'Nie udało się załadować powiadomień.') + '</div></div>';
     });
 
     return {
@@ -2033,10 +2150,16 @@ const refreshBtn = document.getElementById('zerp-notif-refresh');
       el.btnCommunicator.addEventListener('click', function () {
         const has = !!findActiveModule('communicator');
         if (!has) {
-          mountModal('Komunikator', '<p>ModuÄąâ€š komunikatora nie jest dostĂ„â„˘pny dla Twojego konta.</p>', [{ label: 'OK' }]);
+          mountModal('Komunikator', '<p>Modul komunikatora nie jest dostepny dla Twojego konta.</p>', [{ label: 'OK' }]);
           return;
         }
         switchModule('communicator');
+      });
+    }
+
+    if (el.btnNav) {
+      el.btnNav.addEventListener('click', function () {
+        toggleNavDrawer();
       });
     }
 
@@ -2046,13 +2169,18 @@ const refreshBtn = document.getElementById('zerp-notif-refresh');
       });
     }
   }
-
   function boot() {
     bindTopbarActions();
     if (CFG.auth_bg_url) {
       document.documentElement.style.setProperty('--zerp-auth-bg-url', 'url("' + String(CFG.auth_bg_url) + '")');
     }
     setPreLoginMode(true);
+
+    window.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        closeNavDrawer();
+      }
+    });
 
     window.addEventListener('beforeunload', function (ev) {
       if (state.moduleInstance && typeof state.moduleInstance.hasUnsavedChanges === 'function' && state.moduleInstance.hasUnsavedChanges()) {

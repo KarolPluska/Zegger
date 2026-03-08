@@ -76,6 +76,7 @@ final class ZERP_App
         echo '          </div>';
         echo '        </div>';
         echo '        <div class="zerp-topbar-actions">';
+        echo '          <button type="button" class="zerp-icon-btn zerp-nav-toggle" id="zerp-open-nav" title="Moduly"><span aria-hidden="true">&#9776;</span></button>';
         echo '          <button type="button" class="zerp-icon-btn" id="zerp-open-communicator" title="Komunikator"><span aria-hidden="true">&#128172;</span></button>';
         echo '          <button type="button" class="zerp-icon-btn" id="zerp-open-notifications" title="Powiadomienia"><span aria-hidden="true">&#128276;</span><span id="zerp-notification-count" class="zerp-badge">0</span></button>';
         echo '          <button type="button" class="zerp-user-btn" id="zerp-user-menu-btn">Konto</button>';
