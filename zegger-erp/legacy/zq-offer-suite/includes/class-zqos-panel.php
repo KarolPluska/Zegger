@@ -2140,7 +2140,7 @@ CSS;
   var lastOpenToken = '';// dedupe open spam
   var lastOpenHostSeq = 0;
   var openRefreshPromise = null;
-  function isEmbedded(){ try{ return window.parent && window.parent !== window; }catch(e){ return false; } }
+  function isEmbedded(){ try{ if (window.ZQOS && window.ZQOS.forceEmbed) return true; return window.parent && window.parent !== window; }catch(e){ return !!(window.ZQOS && window.ZQOS.forceEmbed); } }
 
   function runOpenRefresh(){
     if (openRefreshPromise) return openRefreshPromise;

@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   'use strict';
 
   const CFG = window.ZEGGER_ERP || {};
@@ -467,17 +467,176 @@
   }
 
   function moduleOffers() {
-    el.moduleView.innerHTML = '' +
+    const cardHtml = '' +
       '<div class="zerp-card">' +
       '  <div class="zerp-row" style="margin-bottom:8px">' +
       '    <strong>Panel Ofertowy</strong>' +
       '    <a class="zerp-btn" target="_blank" rel="noopener" href="' + escapeHtml(CFG.legacy_offer_panel_url || '#') + '">Otwórz w nowej karcie</a>' +
       '  </div>' +
-      '  <iframe src="' + escapeHtml(CFG.legacy_offer_panel_url || '') + '" title="Panel Ofertowy"></iframe>' +
+      '  <div id="zerp-offers-mount-point" class="zerp-offers-inline-host"><div class="zerp-muted">Ładowanie Panelu Ofertowego...</div></div>' +
       '</div>';
 
+    el.moduleView.innerHTML = cardHtml;
+
+    const mountPoint = document.getElementById('zerp-offers-mount-point');
+    if (!mountPoint) {
+      return {
+        unmount: function () {},
+        hasUnsavedChanges: function () { return false; },
+        saveBeforeLeave: function () {},
+        discardChanges: function () {}
+      };
+    }
+
+    let globalHost = document.getElementById('zerp-offers-global-host');
+    if (!globalHost) {
+      globalHost = document.createElement('div');
+      globalHost.id = 'zerp-offers-global-host';
+      globalHost.className = 'zerp-offers-inline-host';
+      globalHost.hidden = true;
+      document.body.appendChild(globalHost);
+    }
+
+    const moveHostToMount = function () {
+      if (mountPoint && globalHost && globalHost.parentNode !== mountPoint) {
+        mountPoint.innerHTML = '';
+        mountPoint.appendChild(globalHost);
+      }
+      globalHost.hidden = false;
+    };
+
+    const hideHost = function () {
+      if (!globalHost) {
+        return;
+      }
+      if (globalHost.parentNode !== document.body) {
+        document.body.appendChild(globalHost);
+      }
+      globalHost.hidden = true;
+    };
+
+    const executeInlineScripts = async function (doc) {
+      const scripts = Array.prototype.slice.call(doc.querySelectorAll('script'));
+      for (let i = 0; i < scripts.length; i += 1) {
+        const src = scripts[i].getAttribute('src');
+        const code = scripts[i].textContent || '';
+
+        await new Promise(function (resolve, reject) {
+          const s = document.createElement('script');
+          s.setAttribute('data-zerp-offers-runtime', '1');
+
+          if (src) {
+            s.src = src;
+            s.async = false;
+            s.onload = function () { resolve(); };
+            s.onerror = function () { reject(new Error('Nie udało się załadować skryptu legacy: ' + src)); };
+          } else {
+            s.text = code;
+            resolve();
+          }
+
+          document.body.appendChild(s);
+        });
+      }
+    };
+
+    const injectLegacyMarkup = async function (html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const headStyles = Array.prototype.slice.call(doc.head.querySelectorAll('style,link[rel="stylesheet"]'));
+      headStyles.forEach(function (node) {
+        if (node.tagName === 'LINK') {
+          const href = node.getAttribute('href') || '';
+          if (!href || document.head.querySelector('link[data-zerp-offers-style="' + href + '"]')) {
+            return;
+          }
+          const l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = href;
+          l.setAttribute('data-zerp-offers-style', href);
+          document.head.appendChild(l);
+          return;
+        }
+
+        const cssText = node.textContent || '';
+        if (!cssText) {
+          return;
+        }
+        const key = 's' + String(cssText.length) + '-' + String(cssText.slice(0, 32));
+        if (document.head.querySelector('style[data-zerp-offers-style-key="' + escapeHtml(key) + '"]')) {
+          return;
+        }
+        const s = document.createElement('style');
+        s.setAttribute('data-zerp-offers-style-key', key);
+        s.textContent = cssText;
+        document.head.appendChild(s);
+      });
+
+      const bodyNodes = Array.prototype.slice.call(doc.body.childNodes);
+      const scriptNodes = [];
+
+      globalHost.innerHTML = '';
+      bodyNodes.forEach(function (node) {
+        if (node.nodeType === 1 && node.tagName === 'SCRIPT') {
+          scriptNodes.push(node);
+          return;
+        }
+        const clone = node.cloneNode(true);
+        globalHost.appendChild(clone);
+      });
+
+      const scriptDoc = document.implementation.createHTMLDocument('zerp-offers-script-doc');
+      scriptNodes.forEach(function (n) {
+        scriptDoc.body.appendChild(n.cloneNode(true));
+      });
+
+      window.ZQOS = window.ZQOS || {};
+      window.ZQOS.forceEmbed = true;
+
+      await executeInlineScripts(scriptDoc);
+      window.postMessage({ type: 'zq:offer:open', payload: null }, window.location.origin);
+    };
+
+    const mountOrLoad = async function () {
+      moveHostToMount();
+
+      if (window.__ZERP_OFFERS_LEGACY_READY) {
+        window.ZQOS = window.ZQOS || {};
+        window.ZQOS.forceEmbed = true;
+        window.postMessage({ type: 'zq:offer:open', payload: null }, window.location.origin);
+        return;
+      }
+
+      const url = CFG.legacy_offer_panel_url || '';
+      if (!url) {
+        mountPoint.innerHTML = '<div class="zerp-error">Brak URL modułu ofertowego.</div>';
+        return;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Accept': 'text/html' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Nie udało się załadować Panelu Ofertowego. HTTP ' + response.status);
+      }
+
+      const html = await response.text();
+      await injectLegacyMarkup(html);
+      window.__ZERP_OFFERS_LEGACY_READY = true;
+    };
+
+    mountOrLoad().catch(function (err) {
+      mountPoint.innerHTML = '<div class="zerp-error">' + escapeHtml(err.message || 'Błąd ładowania modułu ofertowego.') + '</div>';
+    });
+
     return {
-      unmount: function () {},
+      unmount: function () {
+        hideHost();
+      },
       hasUnsavedChanges: function () { return false; },
       saveBeforeLeave: function () {},
       discardChanges: function () {}

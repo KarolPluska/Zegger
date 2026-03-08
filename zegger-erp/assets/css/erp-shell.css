@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --zerp-bg: #f4f5f7;
   --zerp-surface: #ffffff;
   --zerp-surface-2: #f8f9fb;
@@ -463,3 +463,5 @@ textarea {
     grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
   }
 }
+
+.zerp-offers-inline-host{min-height:70dvh;overflow:auto;}
