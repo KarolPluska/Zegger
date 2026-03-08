@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Plugin Name: Zegger ERP
  * Description: Kompletny system ERP Zegger z zachowanym modułem Panel Ofertowy, komunikatorem, relacjami firm, źródłami danych i centrum powiadomień.
