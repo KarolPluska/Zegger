@@ -56,7 +56,7 @@ final class ZERP_Maintenance
     public static function run_daily(): void
     {
         self::cleanup_old_notifications();
-        self::storage_diagnostics();
+        self::storage_diagnostics(false);
     }
 
     public static function cleanup_orphan_accounts(): int
@@ -190,7 +190,7 @@ final class ZERP_Maintenance
         return array('ok' => false, 'issues' => count($rows));
     }
 
-    public static function storage_diagnostics(): array
+    public static function storage_diagnostics(bool $write_log = true): array
     {
         global $wpdb;
         $t = ZERP_DB::tables();
@@ -207,8 +207,11 @@ final class ZERP_Maintenance
             'attachments_active' => $attachments_active,
         );
 
-        ZERP_DB::log_maintenance('storage_diagnostics', $stats);
+        if ($write_log) {
+            ZERP_DB::log_maintenance('storage_diagnostics', $stats);
+        }
 
         return $stats;
     }
 }
+

@@ -16,6 +16,7 @@ final class ZERP_Admin
         add_action('admin_post_zerp_force_sync_google', array(__CLASS__, 'handle_force_sync_google'));
         add_action('admin_post_zerp_regenerate_join_code', array(__CLASS__, 'handle_regenerate_join_code'));
         add_action('admin_post_zerp_save_settings', array(__CLASS__, 'handle_save_settings'));
+        add_action('admin_post_zerp_reset_clean_start', array(__CLASS__, 'handle_reset_clean_start'));
     }
 
     public static function register_menu(): void
@@ -87,12 +88,24 @@ final class ZERP_Admin
 
         echo '<div class="wrap">';
         echo '<h1>Zegger ERP - Migracja</h1>';
+        if (isset($_GET['reset']) && (int) $_GET['reset'] === 1) {
+            echo '<div class="notice notice-success"><p>Reset CLEAN START zakończony.</p></div>';
+        }
         echo '<p>Migracja legacy jest akcją ręczną. CLEAN START nie uruchamia migracji automatycznie podczas aktywacji pluginu.</p>';
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field('zerp_run_migration');
         echo '<input type="hidden" name="action" value="zerp_run_migration">';
         submit_button('Uruchom migrację teraz');
+        echo '</form>';
+
+        echo '<hr style="margin:20px 0">';
+        echo '<h2>Reset CLEAN START</h2>';
+        echo '<p>Usuwa wszystkie tabele i dane zerp_* (dynamicznie wg prefixu), czyści opcje/transienty zerp_* i odtwarza czysty schema bez migracji legacy.</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Na pewno wykonać pełny reset CLEAN START?\');">';
+        wp_nonce_field('zerp_reset_clean_start');
+        echo '<input type="hidden" name="action" value="zerp_reset_clean_start">';
+        submit_button('Wykonaj reset CLEAN START', 'delete');
         echo '</form>';
 
         if (!empty($state['completed_at'])) {
@@ -114,7 +127,7 @@ final class ZERP_Admin
 
         global $wpdb;
         $t = ZERP_DB::tables();
-        $stats = ZERP_Maintenance::storage_diagnostics();
+        $stats = ZERP_Maintenance::storage_diagnostics(false);
         $issues = ZERP_Maintenance::diagnose_offer_thread_consistency();
 
         echo '<div class="wrap">';
@@ -149,7 +162,6 @@ final class ZERP_Admin
 
         echo '</div>';
     }
-
 
     public static function page_settings(): void
     {
@@ -206,6 +218,20 @@ final class ZERP_Admin
         wp_safe_redirect(admin_url('admin.php?page=zegger-erp-settings&updated=1'));
         exit;
     }
+
+    public static function handle_reset_clean_start(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Forbidden');
+        }
+
+        check_admin_referer('zerp_reset_clean_start');
+        ZERP_DB::reset_clean_start();
+
+        wp_safe_redirect(admin_url('admin.php?page=zegger-erp-migration&reset=1'));
+        exit;
+    }
+
     public static function handle_run_migration(): void
     {
         if (!current_user_can('manage_options')) {
@@ -252,4 +278,3 @@ final class ZERP_Admin
         exit;
     }
 }
-

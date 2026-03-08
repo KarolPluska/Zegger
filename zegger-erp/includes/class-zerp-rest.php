@@ -1261,7 +1261,7 @@ final class ZERP_Rest
             return self::error('Brak uprawnień.', 403, 'zerp_forbidden');
         }
 
-        return new WP_REST_Response(array('ok' => true, 'stats' => ZERP_Maintenance::storage_diagnostics()));
+        return new WP_REST_Response(array('ok' => true, 'stats' => ZERP_Maintenance::storage_diagnostics(false)));
     }
 
     public static function route_maintenance_consistency()
