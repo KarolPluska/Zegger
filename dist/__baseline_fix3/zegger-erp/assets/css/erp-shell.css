@@ -859,3 +859,584 @@ textarea {
     width: 100%;
   }
 }
+/* Shell redesign - premium app window */
+body:not(.zerp-prelogin) {
+  background:
+    radial-gradient(circle at 6% 8%, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0) 38%),
+    radial-gradient(circle at 94% 4%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 44%),
+    linear-gradient(180deg, #eef1f5 0%, #e8ecf2 100%);
+}
+
+body:not(.zerp-prelogin) .zerp-app {
+  width: min(1680px, calc(100% - 26px));
+  margin: 13px auto;
+  border: 1px solid rgba(157, 167, 182, 0.35);
+  border-radius: 24px;
+  background: rgba(248, 250, 252, 0.88);
+  backdrop-filter: blur(9px);
+  box-shadow: 0 28px 58px rgba(15, 23, 42, 0.15);
+  overflow: hidden;
+}
+
+body:not(.zerp-prelogin) .zerp-topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 251, 253, 0.86));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  padding: 12px 16px;
+}
+
+body:not(.zerp-prelogin) .zerp-brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+body:not(.zerp-prelogin) .zerp-main {
+  min-height: calc(100dvh - 94px);
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(246, 249, 252, 0.9));
+  border-right: 1px solid rgba(148, 163, 184, 0.28);
+  border-bottom: 0;
+  padding: 14px 10px;
+  gap: 6px;
+}
+
+.zerp-sidebar-head {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.zerp-sidebar-head.is-sub {
+  margin-top: 10px;
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.zerp-sidebar-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(148, 163, 184, 0.36);
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item.is-active {
+  background: #111827;
+  border-color: #111827;
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item.is-active .zerp-sidebar-item-label {
+  color: #f8fafc;
+}
+
+body:not(.zerp-prelogin) .zerp-content {
+  padding: 16px;
+}
+
+body:not(.zerp-prelogin) .zerp-card {
+  border-radius: 18px;
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+  padding: 16px;
+}
+
+.zerp-workspace,
+.zerp-workspace-dashboard {
+  display: grid;
+  gap: 14px;
+}
+
+.zerp-launcher-hero {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 252, 0.9));
+  padding: 18px;
+}
+
+.zerp-kicker {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.zerp-launcher-hero h2 {
+  margin: 0;
+  font-size: clamp(20px, 2.2vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.zerp-launcher-lead {
+  margin: 8px 0 0;
+  max-width: 70ch;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+.zerp-summary-strip--launcher {
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.zerp-launcher-grid,
+.zerp-launcher-future-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.zerp-launcher-tile {
+  text-align: left;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(246, 249, 252, 0.92));
+  padding: 14px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.zerp-launcher-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.09);
+  border-color: rgba(15, 23, 42, 0.28);
+}
+
+.zerp-launcher-tile.is-disabled {
+  opacity: 0.62;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.zerp-launcher-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 10px;
+  border: 1px solid rgba(148, 163, 184, 0.44);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.zerp-launcher-tile-title {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.zerp-launcher-tile-desc {
+  margin-top: 6px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.zerp-launcher-tile-cta {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.zerp-launcher-future-title {
+  margin: 4px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+body:not(.zerp-prelogin) .zerp-grid-two {
+  gap: 14px;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-wrap {
+  gap: 14px;
+}
+
+body:not(.zerp-prelogin) .zerp-list-item {
+  border-radius: 12px;
+}
+
+@media (min-width: 980px) {
+  body:not(.zerp-prelogin) .zerp-main {
+    grid-template-columns: 198px minmax(0, 1fr);
+  }
+
+  .zerp-launcher-grid,
+  .zerp-launcher-future-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zerp-launcher-hero {
+    grid-template-columns: 1.3fr 1fr;
+    align-items: start;
+  }
+}
+
+@media (min-width: 1280px) {
+  .zerp-launcher-grid,
+  .zerp-launcher-future-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 979px) {
+  body:not(.zerp-prelogin) .zerp-app {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .zerp-summary-strip--launcher {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.zerp-brand-mark {
+  overflow: hidden;
+}
+
+.zerp-brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* UI iteration 2026-03 - compact premium shell */
+body:not(.zerp-prelogin) {
+  --zerp-radius: 16px;
+  --zerp-shadow: 0 14px 30px rgba(15, 23, 42, 0.09);
+}
+
+body:not(.zerp-prelogin) .zerp-app {
+  width: min(1640px, calc(100% - 18px));
+  margin: 9px auto;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(248, 250, 252, 0.86);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+body:not(.zerp-prelogin) .zerp-topbar {
+  padding: 10px 14px;
+}
+
+body:not(.zerp-prelogin) .zerp-main {
+  min-height: calc(100dvh - 84px);
+}
+
+@media (min-width: 980px) {
+  body:not(.zerp-prelogin) .zerp-main {
+    grid-template-columns: 174px minmax(0, 1fr);
+  }
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar {
+  padding: 12px 8px;
+  gap: 4px;
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item {
+  padding: 9px 10px;
+  border-radius: 11px;
+}
+
+body:not(.zerp-prelogin) .zerp-sidebar-item .zerp-sidebar-item-label {
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+
+body:not(.zerp-prelogin) .zerp-content {
+  padding: 12px;
+}
+
+body:not(.zerp-prelogin) .zerp-module-view {
+  max-width: 1380px;
+  margin: 0 auto;
+}
+
+body:not(.zerp-prelogin) .zerp-card {
+  padding: 13px 14px;
+  border-radius: 16px;
+}
+
+body:not(.zerp-prelogin) .zerp-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+body:not(.zerp-prelogin) .zerp-row {
+  gap: 10px;
+}
+
+body:not(.zerp-prelogin) .zerp-muted {
+  font-size: 11.5px;
+}
+
+body:not(.zerp-prelogin) .zerp-form-grid {
+  gap: 9px;
+}
+
+body:not(.zerp-prelogin) .zerp-field label {
+  font-size: 11.5px;
+  margin-bottom: 5px;
+  color: #525c6b;
+  font-weight: 600;
+}
+
+body:not(.zerp-prelogin) .zerp-input,
+body:not(.zerp-prelogin) .zerp-select,
+body:not(.zerp-prelogin) textarea {
+  min-height: 40px;
+  border-radius: 11px;
+  padding: 9px 11px;
+  background: #ffffff;
+  border-color: rgba(148, 163, 184, 0.42);
+}
+
+body:not(.zerp-prelogin) textarea {
+  min-height: 84px;
+}
+
+body:not(.zerp-prelogin) .zerp-input:focus,
+body:not(.zerp-prelogin) .zerp-select:focus,
+body:not(.zerp-prelogin) textarea:focus {
+  outline: none;
+  border-color: rgba(17, 24, 39, 0.5);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+body:not(.zerp-prelogin) .zerp-btn,
+body:not(.zerp-prelogin) .zerp-user-btn,
+body:not(.zerp-prelogin) .zerp-icon-btn {
+  border-radius: 11px;
+  min-height: 38px;
+  padding: 7px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+body:not(.zerp-prelogin) .zerp-btn-primary {
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+}
+
+body:not(.zerp-prelogin) .zerp-workspace {
+  gap: 11px;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-hero {
+  padding: 15px 16px;
+  border-radius: 18px;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-lead {
+  margin-top: 6px;
+  max-width: 62ch;
+  line-height: 1.48;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-grid,
+body:not(.zerp-prelogin) .zerp-launcher-future-grid {
+  gap: 9px;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-tile {
+  padding: 12px;
+  border-radius: 14px;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-tile-title {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-tile-desc {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+body:not(.zerp-prelogin) .zerp-launcher-tile-cta {
+  margin-top: 10px;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+body:not(.zerp-prelogin) .zerp-summary-strip--launcher {
+  gap: 7px;
+}
+
+body:not(.zerp-prelogin) .zerp-summary-item {
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+body:not(.zerp-prelogin) .zerp-summary-value {
+  font-size: 18px;
+}
+
+body:not(.zerp-prelogin) .zerp-grid-two,
+body:not(.zerp-prelogin) .zerp-chat-wrap {
+  gap: 10px;
+}
+
+@media (min-width: 980px) {
+  body:not(.zerp-prelogin) .zerp-chat-wrap {
+    grid-template-columns: minmax(304px, 390px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+body:not(.zerp-prelogin) .zerp-chat-panel {
+  min-height: 0;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-left {
+  position: sticky;
+  top: 8px;
+  align-self: start;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-list {
+  margin-top: 8px;
+  max-height: calc(100dvh - 270px);
+}
+
+body:not(.zerp-prelogin) .zerp-chat-messages {
+  max-height: calc(100dvh - 385px);
+  padding-right: 2px;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-thread-btn {
+  border-radius: 11px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-thread-btn:hover {
+  border-color: rgba(15, 23, 42, 0.3);
+  background: #ffffff;
+}
+
+body:not(.zerp-prelogin) .zerp-chat-thread-btn.is-active {
+  border-color: rgba(15, 23, 42, 0.75);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.22) inset;
+}
+
+body:not(.zerp-prelogin) .zerp-list-item {
+  padding: 9px 10px;
+}
+
+body:not(.zerp-prelogin) .zerp-list-item + .zerp-list-item {
+  margin-top: 0;
+}
+
+#zerp-company-card,
+#zerp-relations-card,
+#zerp-members-card,
+#zerp-joins-card,
+#zerp-source-card,
+#zerp-local-catalog-card,
+#zerp-merged-products-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 253, 0.92));
+}
+
+#zerp-company-card .zerp-row,
+#zerp-relations-card .zerp-row,
+#zerp-members-card .zerp-row,
+#zerp-joins-card .zerp-row,
+#zerp-source-card .zerp-row,
+#zerp-local-catalog-card .zerp-row,
+#zerp-merged-products-card .zerp-row {
+  align-items: flex-start;
+}
+
+#zerp-local-catalog-card form + form,
+#zerp-relations-card form + .zerp-list,
+#zerp-members-card form + .zerp-list,
+#zerp-source-card form + .zerp-muted,
+#zerp-merged-products-card .zerp-row + #zerp-merged-table-wrap {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.45);
+}
+
+#zerp-members-card .zerp-list,
+#zerp-joins-card .zerp-list,
+#zerp-relations-card .zerp-list,
+#zerp-merged-products-card .zerp-list,
+#zerp-local-catalog-card .zerp-list {
+  max-height: 48dvh;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+body:not(.zerp-prelogin) #zerp-notif-refresh,
+body:not(.zerp-prelogin) #zerp-notif-mark-read,
+body:not(.zerp-prelogin) #zerp-chat-refresh,
+body:not(.zerp-prelogin) #zerp-merged-refresh,
+body:not(.zerp-prelogin) #zerp-source-force-sync {
+  min-width: 118px;
+}
+
+@media (max-width: 979px) {
+  body:not(.zerp-prelogin) .zerp-app {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  body:not(.zerp-prelogin) .zerp-content {
+    padding: 10px;
+  }
+
+  body:not(.zerp-prelogin) .zerp-chat-left {
+    position: static;
+  }
+
+  #zerp-members-card .zerp-list,
+  #zerp-joins-card .zerp-list,
+  #zerp-relations-card .zerp-list,
+  #zerp-merged-products-card .zerp-list,
+  #zerp-local-catalog-card .zerp-list,
+  body:not(.zerp-prelogin) .zerp-chat-list,
+  body:not(.zerp-prelogin) .zerp-chat-messages {
+    max-height: none;
+  }
+}
