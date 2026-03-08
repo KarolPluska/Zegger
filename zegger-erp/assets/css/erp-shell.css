@@ -1,0 +1,465 @@
+﻿:root {
+  --zerp-bg: #f4f5f7;
+  --zerp-surface: #ffffff;
+  --zerp-surface-2: #f8f9fb;
+  --zerp-text: #1f2530;
+  --zerp-muted: #6b7280;
+  --zerp-border: #dce1e8;
+  --zerp-primary: #111827;
+  --zerp-primary-inverse: #ffffff;
+  --zerp-danger: #b42318;
+  --zerp-warning: #f59e0b;
+  --zerp-radius: 14px;
+  --zerp-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background: var(--zerp-bg);
+  color: var(--zerp-text);
+  font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.zerp-app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.zerp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--zerp-surface);
+  border-bottom: 1px solid var(--zerp-border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.zerp-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.zerp-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--zerp-primary);
+  color: var(--zerp-primary-inverse);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.zerp-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.zerp-brand-sub {
+  font-size: 12px;
+  color: var(--zerp-muted);
+}
+
+.zerp-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zerp-icon-btn,
+.zerp-user-btn,
+.zerp-btn,
+.zerp-input,
+.zerp-select,
+textarea {
+  font: inherit;
+}
+
+.zerp-icon-btn,
+.zerp-user-btn,
+.zerp-btn {
+  border: 1px solid var(--zerp-border);
+  background: var(--zerp-surface);
+  color: var(--zerp-text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.zerp-icon-btn:hover,
+.zerp-user-btn:hover,
+.zerp-btn:hover {
+  background: var(--zerp-surface-2);
+}
+
+.zerp-btn-primary {
+  background: var(--zerp-primary);
+  color: var(--zerp-primary-inverse);
+  border-color: var(--zerp-primary);
+}
+
+.zerp-btn-danger {
+  border-color: #f2b8b5;
+  color: var(--zerp-danger);
+}
+
+.zerp-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: var(--zerp-primary);
+  color: var(--zerp-primary-inverse);
+  margin-left: 4px;
+}
+
+.zerp-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: calc(100dvh - 62px);
+}
+
+.zerp-sidebar {
+  border-bottom: 1px solid var(--zerp-border);
+  background: var(--zerp-surface);
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.zerp-sidebar-item {
+  border: 1px solid var(--zerp-border);
+  background: var(--zerp-surface);
+  border-radius: 10px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zerp-sidebar-item.is-active {
+  background: var(--zerp-primary);
+  color: var(--zerp-primary-inverse);
+  border-color: var(--zerp-primary);
+}
+
+.zerp-sidebar-item.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.zerp-content {
+  padding: 14px;
+}
+
+.zerp-card {
+  background: var(--zerp-surface);
+  border: 1px solid var(--zerp-border);
+  border-radius: var(--zerp-radius);
+  box-shadow: var(--zerp-shadow);
+  padding: 14px;
+}
+
+.zerp-auth-view {
+  max-width: 560px;
+  margin: 20px auto;
+}
+
+.zerp-auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.zerp-auth-tabs button {
+  flex: 1;
+}
+
+.zerp-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.zerp-field label {
+  display: block;
+  font-size: 12px;
+  color: var(--zerp-muted);
+  margin-bottom: 4px;
+}
+
+.zerp-input,
+.zerp-select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--zerp-border);
+  border-radius: 10px;
+  background: var(--zerp-surface);
+  padding: 9px 10px;
+  color: var(--zerp-text);
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.zerp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.zerp-error,
+.zerp-info {
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.zerp-error {
+  color: #8d1d18;
+  background: #fde8e8;
+  border: 1px solid #f8c9c7;
+}
+
+.zerp-info {
+  color: #1d4f91;
+  background: #edf5ff;
+  border: 1px solid #cbe0ff;
+}
+
+.zerp-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.zerp-tile {
+  border: 1px solid var(--zerp-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--zerp-surface);
+  cursor: pointer;
+}
+
+.zerp-tile:hover {
+  background: var(--zerp-surface-2);
+}
+
+.zerp-tile.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.zerp-tile-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.zerp-muted {
+  color: var(--zerp-muted);
+  font-size: 12px;
+}
+
+.zerp-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.zerp-summary-item {
+  border: 1px solid var(--zerp-border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--zerp-surface);
+}
+
+.zerp-summary-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.zerp-module-view iframe {
+  width: 100%;
+  min-height: 76dvh;
+  border: 1px solid var(--zerp-border);
+  border-radius: var(--zerp-radius);
+  background: #fff;
+}
+
+.zerp-list {
+  display: grid;
+  gap: 8px;
+}
+
+.zerp-list-item {
+  border: 1px solid var(--zerp-border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--zerp-surface);
+}
+
+.zerp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.zerp-impersonation-banner {
+  background: #fff7e0;
+  color: #7a4a00;
+  border-bottom: 1px solid #f4d48f;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.zerp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+
+.zerp-modal {
+  width: min(520px, 100%);
+  background: var(--zerp-surface);
+  border: 1px solid var(--zerp-border);
+  border-radius: 14px;
+  box-shadow: var(--zerp-shadow);
+  padding: 14px;
+}
+
+@media (min-width: 940px) {
+  .zerp-main {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .zerp-sidebar {
+    border-bottom: 0;
+    border-right: 1px solid var(--zerp-border);
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .zerp-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zerp-form-grid.cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .zerp-dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.zerp-grid-two {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.zerp-chat-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.zerp-chat-panel {
+  min-height: 280px;
+}
+
+.zerp-chat-list {
+  margin-top: 10px;
+  max-height: 62dvh;
+  overflow: auto;
+}
+
+.zerp-chat-thread-btn {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: var(--zerp-surface);
+}
+
+.zerp-chat-thread-btn.is-active {
+  border-color: var(--zerp-primary);
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.08) inset;
+}
+
+.zerp-chat-messages {
+  max-height: 46dvh;
+  overflow: auto;
+}
+
+.zerp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--zerp-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin: 0 6px 6px 0;
+  background: var(--zerp-surface-2);
+  font-size: 12px;
+}
+
+.zerp-link {
+  color: #0b63ce;
+  text-decoration: none;
+}
+
+.zerp-link:hover {
+  text-decoration: underline;
+}
+
+.zerp-list-item.is-system {
+  background: #f8fafc;
+  border-style: dashed;
+}
+
+@media (min-width: 980px) {
+  .zerp-grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zerp-chat-wrap {
+    grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  }
+}
