@@ -52,14 +52,14 @@ final class ZERP_Admin
 
         echo '<div class="wrap">';
         echo '<h1>Zegger ERP - Dashboard</h1>';
-        echo '<p>Nowy system ERP z zachowanym moduĹ‚em Panel Ofertowy legacy.</p>';
+        echo '<p>Nowy system ERP z zachowanym modułem Panel Ofertowy legacy.</p>';
 
         echo '<table class="widefat striped" style="max-width:900px">';
-        echo '<thead><tr><th>Metryka</th><th>WartoĹ›Ä‡</th></tr></thead><tbody>';
+        echo '<thead><tr><th>Metryka</th><th>Wartość</th></tr></thead><tbody>';
         echo '<tr><td>Firmy</td><td><strong>' . esc_html((string) $companies) . '</strong></td></tr>';
-        echo '<tr><td>UĹĽytkownicy</td><td><strong>' . esc_html((string) $members) . '</strong></td></tr>';
+        echo '<tr><td>Użytkownicy</td><td><strong>' . esc_html((string) $members) . '</strong></td></tr>';
         echo '<tr><td>Oferty ERP</td><td><strong>' . esc_html((string) $offers) . '</strong></td></tr>';
-        echo '<tr><td>WÄ…tki komunikatora</td><td><strong>' . esc_html((string) $threads) . '</strong></td></tr>';
+        echo '<tr><td>Wątki komunikatora</td><td><strong>' . esc_html((string) $threads) . '</strong></td></tr>';
         echo '<tr><td>Relacje firma-firma</td><td><strong>' . esc_html((string) $relations) . '</strong></td></tr>';
         echo '</tbody></table>';
 
@@ -67,8 +67,8 @@ final class ZERP_Admin
         $legacy_panel_url = add_query_arg(array('zq_offer_panel' => '1', 'embed' => '1'), home_url('/'));
 
         echo '<p style="margin-top:16px">';
-        echo '<a class="button button-primary" href="' . esc_url($erp_url) . '" target="_blank" rel="noopener">OtwĂłrz Zegger ERP</a> ';
-        echo '<a class="button" href="' . esc_url($legacy_panel_url) . '" target="_blank" rel="noopener">OtwĂłrz legacy Panel Ofertowy</a>';
+        echo '<a class="button button-primary" href="' . esc_url($erp_url) . '" target="_blank" rel="noopener">Otwórz Zegger ERP</a> ';
+        echo '<a class="button" href="' . esc_url($legacy_panel_url) . '" target="_blank" rel="noopener">Otwórz legacy Panel Ofertowy</a>';
         echo '</p>';
 
         echo '</div>';
@@ -87,17 +87,17 @@ final class ZERP_Admin
 
         echo '<div class="wrap">';
         echo '<h1>Zegger ERP - Migracja</h1>';
-        echo '<p>Migracja legacy jest akcjÄ… rÄ™cznÄ…. CLEAN START nie uruchamia migracji automatycznie podczas aktywacji pluginu.</p>';
+        echo '<p>Uruchamiaj migrację po aktywacji pluginu lub po imporcie danych legacy.</p>';
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field('zerp_run_migration');
         echo '<input type="hidden" name="action" value="zerp_run_migration">';
-        submit_button('Uruchom migracjÄ™ teraz');
+        submit_button('Uruchom migrację teraz');
         echo '</form>';
 
         if (!empty($state['completed_at'])) {
             echo '<h2>Ostatni wynik</h2>';
-            echo '<p><strong>ZakoĹ„czono:</strong> ' . esc_html((string) $state['completed_at']) . '</p>';
+            echo '<p><strong>Zakończono:</strong> ' . esc_html((string) $state['completed_at']) . '</p>';
             if (!empty($state['result'])) {
                 echo '<pre style="background:#fff;padding:12px;border:1px solid #ddd;overflow:auto;max-width:1000px">' . esc_html(wp_json_encode($state['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
             }
@@ -127,13 +127,13 @@ final class ZERP_Admin
         }
         echo '</tbody></table>';
 
-        echo '<h2>SpĂłjnoĹ›Ä‡ powiÄ…zaĹ„ ofertaâ†”wÄ…tek</h2>';
-        echo '<p>Liczba wykrytych problemĂłw: <strong>' . esc_html((string) ($issues['issues'] ?? 0)) . '</strong></p>';
+        echo '<h2>Spójność powiązań oferta↔wątek</h2>';
+        echo '<p>Liczba wykrytych problemów: <strong>' . esc_html((string) ($issues['issues'] ?? 0)) . '</strong></p>';
 
         $logs = $wpdb->get_results("SELECT * FROM {$t['maintenance_logs']} ORDER BY id DESC LIMIT 50", ARRAY_A);
         echo '<h2>Log maintenance</h2>';
         if (!$logs) {
-            echo '<p>Brak wpisĂłw.</p>';
+            echo '<p>Brak wpisów.</p>';
         } else {
             echo '<table class="widefat striped"><thead><tr><th>ID</th><th>Akcja</th><th>Meta</th><th>Data</th></tr></thead><tbody>';
             foreach ($logs as $log) {
@@ -175,11 +175,11 @@ final class ZERP_Admin
 
         echo '<table class="form-table" role="presentation"><tbody>';
         echo '<tr>';
-        echo '<th scope="row"><label for="zerp-auth-bg-url">Auth screen - URL grafiki tĹ‚a</label></th>';
+        echo '<th scope="row"><label for="zerp-auth-bg-url">Auth screen - URL grafiki tła</label></th>';
         echo '<td>';
         echo '<input type="url" class="regular-text" style="width:min(760px,100%)" id="zerp-auth-bg-url" name="auth_background_url" value="' . esc_attr($auth_bg) . '" placeholder="https://twoja-domena.pl/sciezka/tlo-auth.jpg">';
-        echo '<p class="description">Pozostaw puste, aby uĹĽyÄ‡ fallbacku pluginu: <code>' . esc_html($fallback) . '</code>.</p>';
-        echo '<p class="description">Grafika jest automatycznie renderowana z jasnym blurem i jasnÄ… nakĹ‚adkÄ… na ekranie logowania ERP.</p>';
+        echo '<p class="description">Pozostaw puste, aby użyć fallbacku pluginu: <code>' . esc_html($fallback) . '</code>.</p>';
+        echo '<p class="description">Grafika jest automatycznie renderowana z jasnym blurem i jasną nakładką na ekranie logowania ERP.</p>';
         echo '</td>';
         echo '</tr>';
         echo '</tbody></table>';
@@ -252,4 +252,3 @@ final class ZERP_Admin
         exit;
     }
 }
-

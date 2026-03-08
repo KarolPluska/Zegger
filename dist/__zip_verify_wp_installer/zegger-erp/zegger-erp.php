@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Zegger ERP
- * Description: Kompletny system ERP Zegger z zachowanym moduĹ‚em Panel Ofertowy, komunikatorem, relacjami firm, ĹşrĂłdĹ‚ami danych i centrum powiadomieĹ„.
- * Version: 1.0.1
+ * Description: Kompletny system ERP Zegger z zachowanym modułem Panel Ofertowy, komunikatorem, relacjami firm, źródłami danych i centrum powiadomień.
+ * Version: 1.0.0
  * Author: ZEGGER TECH
  * Requires at least: 6.4
  * Requires PHP: 8.1
@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ZERP_VERSION', '1.0.1');
+define('ZERP_VERSION', '1.0.0');
 define('ZERP_PLUGIN_FILE', __FILE__);
 define('ZERP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ZERP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -41,6 +41,7 @@ register_activation_hook(__FILE__, static function () {
     ZERP_DB::activate();
     ZERP_Maintenance::activate();
     ZERP_Legacy_Compat::activate();
+    ZERP_Migration::run_full_migration();
     flush_rewrite_rules();
 });
 
@@ -68,4 +69,3 @@ add_action('plugins_loaded', static function () {
     ZERP_App::init();
     ZERP_Rest::init();
 });
-

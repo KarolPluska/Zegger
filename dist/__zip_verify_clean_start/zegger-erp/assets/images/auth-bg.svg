@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4f6f9"/>
+      <stop offset="60%" stop-color="#e9edf2"/>
+      <stop offset="100%" stop-color="#dce3ea"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#cfd6de" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#f4f6f9" stop-opacity="0.22"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+
+  <g opacity="0.55">
+    <path d="M-100 860L520 180H700L80 860Z" fill="url(#steel)"/>
+    <path d="M260 1000L910 180H1088L440 1000Z" fill="url(#steel)"/>
+    <path d="M780 1000L1370 260H1545L960 1000Z" fill="url(#steel)"/>
+  </g>
+
+  <g stroke="#ffffff" stroke-opacity="0.72" stroke-width="2" fill="none" filter="url(#soft)">
+    <path d="M-120 820L530 105"/>
+    <path d="M170 980L860 130"/>
+    <path d="M600 1020L1260 220"/>
+    <path d="M980 970L1530 300"/>
+  </g>
+
+  <g stroke="#a5b2bf" stroke-opacity="0.26" stroke-width="1">
+    <path d="M0 760H1600"/>
+    <path d="M0 620H1600"/>
+    <path d="M0 480H1600"/>
+    <path d="M0 340H1600"/>
+  </g>
+</svg>
