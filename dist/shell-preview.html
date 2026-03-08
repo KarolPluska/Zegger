@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Zegger ERP Shell Preview</title>
+  <link rel="stylesheet" href="../zegger-erp/assets/css/erp-shell.css">
+</head>
+<body class="zerp-app-body">
+  <div id="zerp-app" class="zerp-app">
+    <div class="zerp-stage-backdrop" aria-hidden="true"></div>
+    <div class="zerp-stage">
+      <div class="zerp-shell-window" id="zerp-shell-window">
+        <header class="zerp-topbar">
+          <div class="zerp-brand-wrap">
+            <div class="zerp-brand-mark"><img src="https://zegger.pl/wp-content/uploads/2025/05/Logo-black-negative-scaled.jpg" alt="Zegger"></div>
+            <div>
+              <div class="zerp-brand-name">Zegger ERP</div>
+              <div class="zerp-brand-sub">Dashboard</div>
+            </div>
+          </div>
+          <div class="zerp-topbar-actions">
+            <button type="button" class="zerp-icon-btn" title="Komunikator"><span aria-hidden="true">💬</span></button>
+            <button type="button" class="zerp-icon-btn" title="Powiadomienia"><span aria-hidden="true">🔔</span><span class="zerp-badge">4</span></button>
+            <button type="button" class="zerp-user-btn">Konto</button>
+          </div>
+        </header>
+
+        <div id="zerp-impersonation-banner" class="zerp-impersonation-banner" hidden></div>
+
+        <nav class="zerp-shell-nav zerp-sidebar" aria-label="Nawigacja modulow">
+          <div class="zerp-nav-track">
+            <button class="zerp-nav-pill zerp-sidebar-item is-active" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">DS</span>
+              <span class="zerp-sidebar-item-label">Dashboard</span>
+            </button>
+            <button class="zerp-nav-pill zerp-sidebar-item" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">OF</span>
+              <span class="zerp-sidebar-item-label">Panel Ofertowy</span>
+            </button>
+            <button class="zerp-nav-pill zerp-sidebar-item" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">KO</span>
+              <span class="zerp-sidebar-item-label">Komunikator</span>
+            </button>
+            <button class="zerp-nav-pill zerp-sidebar-item" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">FU</span>
+              <span class="zerp-sidebar-item-label">Firma i Uzytkownicy</span>
+            </button>
+            <button class="zerp-nav-pill zerp-sidebar-item" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">PR</span>
+              <span class="zerp-sidebar-item-label">Biblioteka Produktow</span>
+            </button>
+            <button class="zerp-nav-pill zerp-sidebar-item" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">NO</span>
+              <span class="zerp-sidebar-item-label">Powiadomienia</span>
+            </button>
+            <span class="zerp-nav-divider">W produkcji</span>
+            <button class="zerp-nav-pill zerp-sidebar-item is-disabled" type="button">
+              <span class="zerp-nav-pill-icon" aria-hidden="true">RP</span>
+              <span class="zerp-sidebar-item-label">Raporty</span>
+            </button>
+          </div>
+        </nav>
+
+        <main class="zerp-main">
+          <section class="zerp-content">
+            <div class="zerp-module-view">
+              <div class="zerp-workspace zerp-workspace-dashboard zerp-module-shell">
+                <section class="zerp-launcher-hero zerp-window-hero">
+                  <div class="zerp-launcher-hero-copy">
+                    <p class="zerp-kicker">Zegger ERP</p>
+                    <h2>Centrum pracy</h2>
+                    <p class="zerp-launcher-lead">Kompaktowe okno aplikacji dla ofert, komunikacji i pracy zespolowej.</p>
+                  </div>
+                  <div class="zerp-summary-strip zerp-summary-strip--launcher">
+                    <div class="zerp-summary-item"><div class="zerp-muted">Powiadomienia</div><div class="zerp-summary-value">4</div></div>
+                    <div class="zerp-summary-item"><div class="zerp-muted">Rozmowy</div><div class="zerp-summary-value">3</div></div>
+                    <div class="zerp-summary-item"><div class="zerp-muted">Wnioski</div><div class="zerp-summary-value">1</div></div>
+                  </div>
+                </section>
+
+                <section class="zerp-launcher-grid">
+                  <button class="zerp-launcher-tile" type="button">
+                    <div class="zerp-launcher-tile-top">
+                      <span class="zerp-launcher-icon" aria-hidden="true">OF</span>
+                      <span class="zerp-launcher-chip">Oferty</span>
+                    </div>
+                    <div class="zerp-launcher-tile-title">Panel Ofertowy</div>
+                    <div class="zerp-launcher-tile-desc">Pelny flow pracy handlowej i historia ofert bez regresji.</div>
+                    <div class="zerp-launcher-tile-cta">Przejdz do modulu</div>
+                  </button>
+                  <button class="zerp-launcher-tile" type="button">
+                    <div class="zerp-launcher-tile-top">
+                      <span class="zerp-launcher-icon" aria-hidden="true">KO</span>
+                      <span class="zerp-launcher-chip">Komunikacja</span>
+                    </div>
+                    <div class="zerp-launcher-tile-title">Komunikator</div>
+                    <div class="zerp-launcher-tile-desc">Rozmowy operacyjne i ofertowe z jasnym kontekstem relacji A↔B.</div>
+                    <div class="zerp-launcher-tile-cta">Przejdz do modulu</div>
+                  </button>
+                  <button class="zerp-launcher-tile" type="button">
+                    <div class="zerp-launcher-tile-top">
+                      <span class="zerp-launcher-icon" aria-hidden="true">PR</span>
+                      <span class="zerp-launcher-chip">Produkty</span>
+                    </div>
+                    <div class="zerp-launcher-tile-title">Biblioteka Produktow</div>
+                    <div class="zerp-launcher-tile-desc">Google Sheets i katalog lokalny w jednym, czytelnym widoku pracy.</div>
+                    <div class="zerp-launcher-tile-cta">Przejdz do modulu</div>
+                  </button>
+                </section>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
