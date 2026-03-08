@@ -32,6 +32,7 @@ final class ZERP_App
             'rest_base' => esc_url_raw(home_url('/?rest_route=/' . ZERP_REST_NS . '/')),
             'app_url' => esc_url_raw(add_query_arg(array('zegger_erp' => '1'), home_url('/'))),
             'legacy_offer_panel_url' => esc_url_raw(add_query_arg(array('zq_offer_panel' => '1', 'embed' => '1'), home_url('/'))),
+            'auth_bg_url' => esc_url_raw(ZERP_PLUGIN_URL . 'assets/images/auth-bg.svg'),
             'version' => ZERP_VERSION,
             'assets_url' => ZERP_PLUGIN_URL . 'assets/',
             'nonce' => wp_create_nonce('wp_rest'),

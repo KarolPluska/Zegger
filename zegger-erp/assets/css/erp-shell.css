@@ -11,6 +11,7 @@
   --zerp-warning: #f59e0b;
   --zerp-radius: 14px;
   --zerp-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --zerp-auth-bg-url: none;
 }
 
 * {
@@ -465,3 +466,397 @@ textarea {
 }
 
 .zerp-offers-inline-host{min-height:70dvh;overflow:auto;}
+/* Auth Premium Prelogin */
+body.zerp-prelogin {
+  background: #edf0f4;
+}
+
+body.zerp-prelogin .zerp-topbar,
+body.zerp-prelogin .zerp-sidebar,
+body.zerp-prelogin .zerp-module-view,
+body.zerp-prelogin .zerp-impersonation-banner {
+  display: none !important;
+}
+
+body.zerp-prelogin .zerp-main {
+  display: block;
+  min-height: 100dvh;
+}
+
+body.zerp-prelogin .zerp-content {
+  padding: 0;
+  min-height: 100dvh;
+}
+
+body.zerp-prelogin .zerp-auth-view {
+  max-width: none;
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 3vw, 34px);
+}
+
+.zerp-auth-scene {
+  position: relative;
+  width: min(1280px, 100%);
+  min-height: clamp(620px, 94dvh, 980px);
+  border-radius: 30px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.zerp-auth-backdrop,
+.zerp-auth-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.zerp-auth-backdrop {
+  background-image:
+    linear-gradient(120deg, rgba(17, 24, 39, 0.18), rgba(17, 24, 39, 0.08)),
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(circle at 85% 25%, rgba(255, 255, 255, 0.45), transparent 58%),
+    var(--zerp-auth-bg-url);
+  background-size: cover, cover, cover, cover;
+  background-position: center;
+  transform: scale(1.04);
+  filter: saturate(0.88) contrast(0.95);
+}
+
+.zerp-auth-overlay {
+  background: linear-gradient(165deg, rgba(248, 250, 252, 0.54), rgba(241, 245, 249, 0.75));
+  backdrop-filter: blur(16px);
+}
+
+.zerp-auth-card {
+  position: relative;
+  z-index: 2;
+  width: min(560px, calc(100% - 22px));
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 38px 90px rgba(15, 23, 42, 0.22), 0 8px 20px rgba(15, 23, 42, 0.1);
+  padding: clamp(22px, 3.4vw, 34px);
+}
+
+.zerp-auth-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.zerp-auth-brand-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: #101827;
+  color: #f8fafc;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.24);
+}
+
+.zerp-auth-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.zerp-auth-head h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 31px);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: #121923;
+}
+
+.zerp-auth-lead {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4b5563;
+}
+
+.zerp-auth-segment {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  border-radius: 14px;
+  border: 1px solid #dbe2ea;
+  background: #eef2f6;
+  padding: 4px;
+  margin-bottom: 14px;
+}
+
+.zerp-auth-segment-btn {
+  border: 0;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  background: transparent;
+  color: #495565;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.zerp-auth-segment-btn:hover {
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.zerp-auth-segment-btn.is-active {
+  background: #101827;
+  color: #f8fafc;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.24);
+}
+
+.zerp-auth-segment-btn:focus-visible,
+.zerp-input:focus-visible,
+.zerp-select:focus-visible,
+textarea:focus-visible,
+.zerp-btn:focus-visible,
+.zerp-input-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.18);
+}
+
+.zerp-auth-feedback {
+  margin-bottom: 10px;
+}
+
+.zerp-auth-feedback:empty {
+  display: none;
+}
+
+.zerp-auth-form-complex {
+  row-gap: 12px;
+}
+
+.zerp-auth-progress {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.zerp-auth-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid #d8e0e8;
+  background: #f4f7fa;
+  color: #516174;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.zerp-auth-step.is-active {
+  border-color: #101827;
+  background: #101827;
+  color: #f8fafc;
+}
+
+.zerp-auth-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.zerp-auth-help {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #5f6b7b;
+}
+
+.zerp-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #425066;
+}
+
+.zerp-input,
+.zerp-select,
+textarea {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #d7dee7;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 14px;
+  color: #111827;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.zerp-input::placeholder,
+textarea::placeholder {
+  color: #9aa5b1;
+}
+
+.zerp-input:focus,
+.zerp-select:focus,
+textarea:focus {
+  border-color: #6b7280;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.18);
+  outline: none;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.zerp-input-wrap {
+  position: relative;
+}
+
+.zerp-input-wrap .zerp-input {
+  padding-right: 48px;
+}
+
+.zerp-input-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #5f6b7b;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.zerp-input-toggle:hover,
+.zerp-input-toggle.is-active {
+  background: #f2f5f8;
+  border-color: #dbe2ea;
+  color: #111827;
+}
+
+.zerp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 8px;
+}
+
+.zerp-actions .zerp-btn {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  border-color: #d5dce5;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.zerp-actions .zerp-btn-primary {
+  border-color: #111827;
+  background: #111827;
+  color: #f8fafc;
+}
+
+.zerp-actions .zerp-btn-primary:hover {
+  background: #1f2937;
+  border-color: #1f2937;
+}
+
+.zerp-actions .zerp-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.zerp-error,
+.zerp-info {
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+
+.zerp-error {
+  color: #8f2320;
+  background: rgba(254, 241, 241, 0.96);
+  border-color: #f3d4d4;
+}
+
+.zerp-info {
+  color: #1f3d63;
+  background: rgba(238, 246, 255, 0.96);
+  border-color: #d2e3f7;
+}
+
+@media (max-width: 940px) {
+  .zerp-auth-scene {
+    min-height: calc(100dvh - 16px);
+    border-radius: 22px;
+  }
+
+  .zerp-auth-card {
+    width: min(560px, calc(100% - 16px));
+    border-radius: 20px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 720px) {
+  body.zerp-prelogin .zerp-auth-view {
+    padding: 8px;
+  }
+
+  .zerp-auth-scene {
+    border-radius: 18px;
+  }
+
+  .zerp-auth-card {
+    width: min(560px, calc(100% - 10px));
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .zerp-auth-head h1 {
+    font-size: 24px;
+  }
+
+  .zerp-auth-segment {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .zerp-auth-segment-btn {
+    min-height: 38px;
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
+  .zerp-actions .zerp-btn {
+    width: 100%;
+  }
+}

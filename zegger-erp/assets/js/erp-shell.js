@@ -131,6 +131,25 @@
     el.modalRoot.appendChild(back);
   }
 
+  function setPreLoginMode(enabled) {
+    const on = !!enabled;
+    document.body.classList.toggle('zerp-prelogin', on);
+    const app = document.getElementById('zerp-app');
+    if (app) {
+      app.classList.toggle('zerp-prelogin', on);
+    }
+
+    if (on) {
+      el.modalRoot.innerHTML = '';
+      el.sidebar.innerHTML = '';
+      el.moduleView.hidden = true;
+      el.moduleView.innerHTML = '';
+      el.impersonationBanner.hidden = true;
+      el.impersonationBanner.innerHTML = '';
+      el.moduleLabel.textContent = 'Zegger ERP';
+    }
+  }
+
   function clearViews() {
     el.authView.hidden = true;
     el.moduleView.hidden = true;
@@ -138,38 +157,92 @@
     el.moduleView.innerHTML = '';
   }
 
+  function renderAuthLoading() {
+    clearViews();
+    setPreLoginMode(true);
+    el.authView.hidden = false;
+    el.authView.innerHTML = '<div class="zerp-auth-scene"><div class="zerp-auth-backdrop"></div><div class="zerp-auth-overlay"></div><section class="zerp-auth-card"><header class="zerp-auth-head"><div class="zerp-auth-brand-mark">ZE</div><p class="zerp-auth-kicker">Zegger ERP</p><h1>Weryfikacja sesji</h1><p class="zerp-auth-lead">Sprawdzamy Twoje konto. To potrwa chwilę.</p></header><div class="zerp-info">Ładowanie...</div></section></div>';
+  }
+
+  function wirePasswordToggles(scope) {
+    if (!scope) {
+      return;
+    }
+
+    scope.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const wrap = btn.closest('.zerp-input-wrap');
+        const input = wrap ? wrap.querySelector('input') : null;
+        if (!input) {
+          return;
+        }
+
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-label', show ? 'Ukryj hasło' : 'Pokaż hasło');
+        btn.classList.toggle('is-active', show);
+      });
+    });
+  }
+
   function renderAuth() {
     clearViews();
-    el.sidebar.innerHTML = '';
+    setPreLoginMode(true);
     el.authView.hidden = false;
 
-    el.authView.innerHTML = '' +
-      '<div class="zerp-card">' +
-      '  <h2 style="margin-top:0">Logowanie do Zegger ERP</h2>' +
-      '  <div class="zerp-auth-tabs">' +
-      '    <button class="zerp-btn zerp-btn-primary" data-auth-tab="login">Logowanie</button>' +
-      '    <button class="zerp-btn" data-auth-tab="register-company">Nowa firma</button>' +
-      '    <button class="zerp-btn" data-auth-tab="register-member">Dołącz do firmy</button>' +
-      '  </div>' +
-      '  <div id="zerp-auth-feedback"></div>' +
-      '  <div id="zerp-auth-body"></div>' +
-      '</div>';
+    el.authView.innerHTML = `
+      <div class="zerp-auth-scene">
+        <div class="zerp-auth-backdrop"></div>
+        <div class="zerp-auth-overlay"></div>
+        <section class="zerp-auth-card" aria-label="Ekran logowania Zegger ERP">
+          <header class="zerp-auth-head">
+            <div class="zerp-auth-brand-mark">ZE</div>
+            <p class="zerp-auth-kicker">Strefa dostępu</p>
+            <h1>Logowanie do Zegger ERP</h1>
+            <p class="zerp-auth-lead">Nowoczesne środowisko ofert, relacji i komunikacji w jednym miejscu.</p>
+          </header>
+
+          <div class="zerp-auth-segment" role="tablist" aria-label="Sekcje konta">
+            <button class="zerp-auth-segment-btn is-active" type="button" role="tab" aria-selected="true" data-auth-tab="login">Logowanie</button>
+            <button class="zerp-auth-segment-btn" type="button" role="tab" aria-selected="false" data-auth-tab="register-company">Nowa firma</button>
+            <button class="zerp-auth-segment-btn" type="button" role="tab" aria-selected="false" data-auth-tab="register-member">Dołącz do firmy</button>
+          </div>
+
+          <div id="zerp-auth-feedback" class="zerp-auth-feedback" aria-live="polite"></div>
+          <div id="zerp-auth-body"></div>
+        </section>
+      </div>`;
 
     const feedback = document.getElementById('zerp-auth-feedback');
     const body = document.getElementById('zerp-auth-body');
 
     function setTab(tab) {
       el.authView.querySelectorAll('[data-auth-tab]').forEach(function (btn) {
-        btn.classList.toggle('zerp-btn-primary', btn.getAttribute('data-auth-tab') === tab);
+        const active = btn.getAttribute('data-auth-tab') === tab;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
       });
 
       if (tab === 'login') {
-        body.innerHTML = '' +
-          '<form id="zerp-login-form" class="zerp-form-grid">' +
-          '  <div class="zerp-field"><label>Login lub e-mail</label><input class="zerp-input" name="login" required></div>' +
-          '  <div class="zerp-field"><label>Hasło</label><input class="zerp-input" name="password" type="password" required></div>' +
-          '  <div class="zerp-actions"><button class="zerp-btn zerp-btn-primary" type="submit">Zaloguj</button></div>' +
-          '</form>';
+        body.innerHTML = `
+          <form id="zerp-login-form" class="zerp-form-grid">
+            <div class="zerp-field">
+              <label>Login lub e-mail</label>
+              <input class="zerp-input" name="login" autocomplete="username" required>
+            </div>
+            <div class="zerp-field">
+              <label>Hasło</label>
+              <div class="zerp-input-wrap">
+                <input class="zerp-input" name="password" type="password" autocomplete="current-password" required>
+                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
+              </div>
+            </div>
+            <div class="zerp-actions">
+              <button class="zerp-btn zerp-btn-primary" type="submit">Zaloguj</button>
+            </div>
+          </form>`;
+
+        wirePasswordToggles(body);
 
         document.getElementById('zerp-login-form').addEventListener('submit', async function (ev) {
           ev.preventDefault();
@@ -193,21 +266,39 @@
       }
 
       if (tab === 'register-company') {
-        body.innerHTML = '' +
-          '<form id="zerp-register-company" class="zerp-form-grid cols-2">' +
-          '  <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>' +
-          '  <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>' +
-          '  <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" required></div>' +
-          '  <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone"></div>' +
-          '  <div class="zerp-field"><label>Hasło</label><input class="zerp-input" name="password" type="password" minlength="8" required></div>' +
-          '  <div></div>' +
-          '  <div class="zerp-field"><label>Nazwa firmy</label><input class="zerp-input" name="company_name" required></div>' +
-          '  <div class="zerp-field"><label>NIP</label><input class="zerp-input" name="company_nip" required></div>' +
-          '  <div class="zerp-field"><label>Adres firmy</label><textarea name="company_address"></textarea></div>' +
-          '  <div class="zerp-field"><label>E-mail firmy</label><input class="zerp-input" name="company_email" type="email" required></div>' +
-          '  <div class="zerp-field"><label>Telefon firmy</label><input class="zerp-input" name="company_phone"></div>' +
-          '  <div class="zerp-actions"><button class="zerp-btn zerp-btn-primary" type="submit">Utwórz firmę</button></div>' +
-          '</form>';
+        body.innerHTML = `
+          <form id="zerp-register-company" class="zerp-form-grid cols-2 zerp-auth-form-complex">
+            <div class="zerp-auth-progress" style="grid-column:1/-1">
+              <span class="zerp-auth-step is-active">1. Dane konta</span>
+              <span class="zerp-auth-step">2. Dane firmy</span>
+            </div>
+
+            <div class="zerp-auth-section-label" style="grid-column:1/-1">Krok 1 - Konto użytkownika</div>
+            <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>
+            <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>
+            <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" autocomplete="email" required></div>
+            <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone" autocomplete="tel"></div>
+            <div class="zerp-field" style="grid-column:1/-1">
+              <label>Hasło</label>
+              <div class="zerp-input-wrap">
+                <input class="zerp-input" name="password" type="password" minlength="8" autocomplete="new-password" required>
+                <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
+              </div>
+            </div>
+
+            <div class="zerp-auth-section-label" style="grid-column:1/-1">Krok 2 - Profil firmy</div>
+            <div class="zerp-field"><label>Nazwa firmy</label><input class="zerp-input" name="company_name" required></div>
+            <div class="zerp-field"><label>NIP</label><input class="zerp-input" name="company_nip" required></div>
+            <div class="zerp-field"><label>E-mail firmy</label><input class="zerp-input" name="company_email" type="email" required></div>
+            <div class="zerp-field"><label>Telefon firmy</label><input class="zerp-input" name="company_phone"></div>
+            <div class="zerp-field" style="grid-column:1/-1"><label>Adres firmy</label><textarea name="company_address"></textarea></div>
+
+            <div class="zerp-actions" style="grid-column:1/-1">
+              <button class="zerp-btn zerp-btn-primary" type="submit">Utwórz firmę</button>
+            </div>
+          </form>`;
+
+        wirePasswordToggles(body);
 
         document.getElementById('zerp-register-company').addEventListener('submit', async function (ev) {
           ev.preventDefault();
@@ -230,18 +321,32 @@
         return;
       }
 
-      body.innerHTML = '' +
-        '<form id="zerp-register-member" class="zerp-form-grid cols-2">' +
-        '  <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>' +
-        '  <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>' +
-        '  <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" required></div>' +
-        '  <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone"></div>' +
-        '  <div class="zerp-field"><label>Hasło</label><input class="zerp-input" name="password" type="password" minlength="8" required></div>' +
-        '  <div></div>' +
-        '  <div class="zerp-field"><label>Nazwa firmy (opcjonalnie)</label><input class="zerp-input" name="company_query"></div>' +
-        '  <div class="zerp-field"><label>Join code (opcjonalnie)</label><input class="zerp-input" name="join_code"></div>' +
-        '  <div class="zerp-actions"><button class="zerp-btn zerp-btn-primary" type="submit">Wyślij prośbę o dołączenie</button></div>' +
-        '</form>';
+      body.innerHTML = `
+        <form id="zerp-register-member" class="zerp-form-grid cols-2 zerp-auth-form-complex">
+          <div class="zerp-auth-section-label" style="grid-column:1/-1">Konto użytkownika</div>
+          <div class="zerp-field"><label>Imię</label><input class="zerp-input" name="first_name" required></div>
+          <div class="zerp-field"><label>Nazwisko</label><input class="zerp-input" name="last_name" required></div>
+          <div class="zerp-field"><label>E-mail</label><input class="zerp-input" name="email" type="email" required></div>
+          <div class="zerp-field"><label>Telefon</label><input class="zerp-input" name="phone"></div>
+          <div class="zerp-field" style="grid-column:1/-1">
+            <label>Hasło</label>
+            <div class="zerp-input-wrap">
+              <input class="zerp-input" name="password" type="password" minlength="8" autocomplete="new-password" required>
+              <button class="zerp-input-toggle" type="button" data-toggle-password aria-label="Pokaż hasło">&#128065;</button>
+            </div>
+          </div>
+
+          <div class="zerp-auth-section-label" style="grid-column:1/-1">Dane dołączenia</div>
+          <div class="zerp-field"><label>Nazwa firmy (opcjonalnie)</label><input class="zerp-input" name="company_query"></div>
+          <div class="zerp-field"><label>Join code (opcjonalnie)</label><input class="zerp-input" name="join_code"></div>
+          <p class="zerp-auth-help" style="grid-column:1/-1">Jeśli masz kod zaproszenia firmy, wpisz go. Wniosek szybciej trafi do właściwego ownera.</p>
+
+          <div class="zerp-actions" style="grid-column:1/-1">
+            <button class="zerp-btn zerp-btn-primary" type="submit">Wyślij prośbę o dołączenie</button>
+          </div>
+        </form>`;
+
+      wirePasswordToggles(body);
 
       document.getElementById('zerp-register-member').addEventListener('submit', async function (ev) {
         ev.preventDefault();
@@ -295,17 +400,20 @@
       const me = await api('auth/me');
       state.me = me.member || null;
       state.modules = me.modules || { active: [], future: [] };
+      setPreLoginMode(false);
       updateTopbar();
       renderApp();
       await refreshUnreadCount();
     } catch (err) {
       setToken('');
       state.me = null;
+      setPreLoginMode(true);
       renderAuth();
     }
   }
 
   function renderApp() {
+    setPreLoginMode(false);
     clearViews();
     el.moduleView.hidden = false;
     renderSidebar();
@@ -1793,6 +1901,10 @@
 
   function boot() {
     bindTopbarActions();
+    if (CFG.auth_bg_url) {
+      document.documentElement.style.setProperty('--zerp-auth-bg-url', 'url("' + String(CFG.auth_bg_url) + '")');
+    }
+    setPreLoginMode(true);
 
     window.addEventListener('beforeunload', function (ev) {
       if (state.moduleInstance && typeof state.moduleInstance.hasUnsavedChanges === 'function' && state.moduleInstance.hasUnsavedChanges()) {
@@ -1802,6 +1914,7 @@
     });
 
     if (state.token) {
+      renderAuthLoading();
       afterAuth();
     } else {
       renderAuth();
